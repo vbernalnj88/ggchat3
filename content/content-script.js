@@ -585,17 +585,18 @@
     console.log('[Chat Archiver] Starting profile modal polling...');
     
     profileModalPoller = setInterval(() => {
-      // Look for the profile modal div with data-multiplayer-profile-modal attribute
-      const profileModal = document.querySelector('div[data-multiplayer-profile-modal]');
+      // Look for #mp-profile-heading anywhere on the page (more reliable than looking for modal)
+      const profileHeading = document.querySelector('h3#mp-profile-heading');
       
-      if (profileModal) {
-        // Extract display name from the heading
-        const displayNameEl = profileModal.querySelector('h3#mp-profile-heading span.truncate');
+      if (profileHeading) {
+        // Extract display name from the heading span
+        const displayNameEl = profileHeading.querySelector('span.min-w-0.whitespace-nowrap') || 
+                              profileHeading.querySelector('span.truncate');
         const displayName = displayNameEl ? displayNameEl.textContent.trim() : '';
         
-        // Extract @username from the href of the link inside/after mp-profile-heading (more reliable)
+        // Extract @username from the href of the link following mp-profile-heading (most reliable)
         let atUsername = '';
-        const profileLink = profileModal.querySelector('h3#mp-profile-heading a[href*="/profile/"]');
+        const profileLink = profileHeading.querySelector('a[href*="/profile/"]');
         if (profileLink) {
           const hrefMatch = profileLink.href.match(/\/profile\/([@\w-]+)/i);
           if (hrefMatch) {
@@ -605,7 +606,9 @@
         
         // Fallback: try to extract @username from the paragraph below the heading
         if (!atUsername) {
-          const usernameEl = profileModal.querySelector('p.text-xs.text-gray-500');
+          // Look for the paragraph sibling that contains @username
+          const usernameEl = profileHeading.parentElement?.querySelector('p.text-xs.text-gray-500') ||
+                             profileHeading.closest('[class*="flex-col"]')?.querySelector('p.text-xs.text-gray-500');
           if (usernameEl) {
             const usernameText = usernameEl.textContent.trim();
             // Remove the @ symbol if present
