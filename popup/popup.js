@@ -6,6 +6,7 @@ let currentSessionId = null;
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
+  setupImportButton();
   loadUsers();
 });
 
@@ -18,6 +19,30 @@ function setupNavigation() {
       switchView(viewName);
     });
   });
+  
+  // Setup back buttons
+  const backToAllSessionsBtn = document.getElementById('back-to-all-sessions-btn');
+  if (backToAllSessionsBtn) {
+    backToAllSessionsBtn.addEventListener('click', showAllSessionsView);
+  }
+  
+  const backToSessionsBtn = document.getElementById('back-to-sessions-btn');
+  if (backToSessionsBtn) {
+    backToSessionsBtn.addEventListener('click', backToSessions);
+  }
+  
+  const backToUsersBtn = document.getElementById('back-to-users-btn');
+  if (backToUsersBtn) {
+    backToUsersBtn.addEventListener('click', backToUsers);
+  }
+}
+
+// Setup import button
+function setupImportButton() {
+  const importBtn = document.getElementById('import-btn');
+  if (importBtn) {
+    importBtn.addEventListener('click', importChatData);
+  }
 }
 
 // Switch between views
@@ -695,10 +720,10 @@ function showEmptyState(elementId, message) {
   }
 }
 
-// Make functions globally available
-window.showUserSessions = showUserSessions;
-window.showAllSessionsView = showAllSessionsView;
-window.showSessionMessages = showSessionMessages;
-window.backToUsers = backToUsers;
-window.backToSessions = backToSessions;
-window.importChatData = importChatData;
+// Make functions globally available (not needed anymore since we use addEventListener)
+// window.showUserSessions = showUserSessions;
+// window.showAllSessionsView = showAllSessionsView;
+// window.showSessionMessages = showSessionMessages;
+// window.backToUsers = backToUsers;
+// window.backToSessions = backToSessions;
+// window.importChatData = importChatData;
