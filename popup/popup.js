@@ -618,47 +618,46 @@ async function importChatData() {
   }
 }
 
-// Parse imported text format: "username:time message" or "username:time\nmessage"
+// Parse imported text format: "username:time message" or "username:time\nmessage" or "usernameTime\nmessage"
 function parseImportedText(text, sessionId) {
   console.log('[Parse] Starting to parse text');
   const messages = [];
   const lines = text.split('\n');
   let currentMessage = null;
   let messageIdCounter = 0;
+
+  // Pattern 1: username: time (with colon and space)
+  // Pattern 2: usernameTime (no space/colon, e.g., "vbernalnj5:07 PM")
+  // Username should be alphanumeric (plus _, @, -) with no spaces
+  // Time pattern: digits:digits optionally followed by AM/PM
   
-  // Improved regex to match username:time pattern
-  // Username should not contain spaces and should be followed by a time-like pattern
-  // This prevents matching sentences like "of course :) anytime for you"
-  const messagePattern = /^([^\s:]+):\s*(\d{1,2}:\d{2}\s*(AM|PM|am|pm)?|\d{1,2}\s*(AM|PM|am|pm)|\[\d{1,2}:\d{2}\]|.*?\d{1,2}:\d{2}.*)$/i;
-  
-  // Alternative simpler pattern: username (no spaces) followed by colon and time
-  const simpleMessagePattern = /^([A-Za-z0-9_@-]+):\s*(\d{1,2}[:\d]\s*(AM|PM|am|pm)?|\[?\d{1,2}:\d{2}\]?)/i;
-  
+  const messagePattern = /^([A-Za-z0-9_@-]+)\s*:\s*(\d{1,2}:\d{2})\s*(AM|PM|am|pm)?\s*(.*)$/i;
+  const noColonPattern = /^([A-Za-z0-9_@-]+)(\d{1,2}:\d{2})\s*(AM|PM|am|pm)?\s*(.*)$/i;
+
   for (const line of lines) {
     const trimmedLine = line.trim();
     if (!trimmedLine) continue;
+
+    // Try to match the pattern with colon
+    let match = trimmedLine.match(messagePattern);
     
-    // Try to match the pattern
-    let match = trimmedLine.match(simpleMessagePattern);
-    
-    // If no match with simple pattern, check if line looks like a message continuation
-    // by seeing if it starts with common sentence patterns (lowercase, punctuation mid-sentence)
-    const looksLikeContinuation = /^[a-z]/.test(trimmedLine) || 
-                                   /^[^A-Za-z0-9]/.test(trimmedLine) ||
-                                   trimmedLine.includes(':)') ||
-                                   trimmedLine.includes(':(') ||
-                                   trimmedLine.includes('<3');
-    
-    if (match && !looksLikeContinuation) {
+    // If no match, try the no-colon pattern (username directly followed by time)
+    if (!match) {
+      match = trimmedLine.match(noColonPattern);
+    }
+
+    // If we have a match, it's ALWAYS a new message header
+    if (match) {
       // Save previous message if exists
       if (currentMessage) {
         messages.push(currentMessage);
       }
-      
+
       // Start new message
       const username = match[1].trim();
-      const restOfLine = trimmedLine.substring(username.length + 1).trim();
-      
+      // Group 4 is the content after the timestamp
+      const restOfLine = (match[4] || '').trim();
+
       currentMessage = {
         id: `${sessionId}-${messageIdCounter++}`,
         type: 'message',
@@ -667,32 +666,48 @@ function parseImportedText(text, sessionId) {
         timestamp: new Date().toISOString(),
         rawHtml: ''
       };
-    } else if (currentMessage) {
-      // This is a continuation of the previous message
-      if (currentMessage.content) {
-        currentMessage.content += '\n' + trimmedLine;
-      } else {
-        currentMessage.content = trimmedLine;
-      }
     } else {
-      // No current message and line doesn't match pattern - treat as standalone with unknown author
-      // This handles cases where the format doesn't match expected pattern
-      currentMessage = {
-        id: `${sessionId}-${messageIdCounter++}`,
-        type: 'message',
-        author: 'Unknown',
-        content: trimmedLine,
-        timestamp: new Date().toISOString(),
-        rawHtml: ''
-      };
+      // No match - this must be a continuation or standalone message
+      // Check if line looks like a message continuation
+      const looksLikeContinuation = /^[a-z]/.test(trimmedLine) || 
+                                     /^[^A-Za-z0-9]/.test(trimmedLine) ||
+                                     trimmedLine.includes(':)') ||
+                                     trimmedLine.includes(':(') ||
+                                     trimmedLine.includes('<3');
+      
+      if (currentMessage && looksLikeContinuation) {
+        // This is a continuation of the previous message
+        if (currentMessage.content) {
+          currentMessage.content += '\n' + trimmedLine;
+        } else {
+          currentMessage.content = trimmedLine;
+        }
+      } else {
+        // Standalone message with unknown author
+        if (currentMessage) {
+          messages.push(currentMessage);
+        }
+        currentMessage = {
+          id: `${sessionId}-${messageIdCounter++}`,
+          type: 'message',
+          author: 'Unknown',
+          content: trimmedLine,
+          timestamp: new Date().toISOString(),
+          rawHtml: ''
+        };
+      }
     }
   }
-  
+
   // Don't forget the last message
   if (currentMessage) {
     messages.push(currentMessage);
   }
-  
+
+  console.log('[Parse] Parsed', messages.length, 'messages');
+  return messages;
+}
+
   console.log('[Parse] Parsed', messages.length, 'messages');
   return messages;
 }
