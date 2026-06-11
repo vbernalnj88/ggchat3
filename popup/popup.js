@@ -626,16 +626,30 @@ function parseImportedText(text, sessionId) {
   let currentMessage = null;
   let messageIdCounter = 0;
   
-  // Regex to match username:time pattern
-  const messagePattern = /^([^:]+):\s*(.+?)$/;
+  // Improved regex to match username:time pattern
+  // Username should not contain spaces and should be followed by a time-like pattern
+  // This prevents matching sentences like "of course :) anytime for you"
+  const messagePattern = /^([^\s:]+):\s*(\d{1,2}:\d{2}\s*(AM|PM|am|pm)?|\d{1,2}\s*(AM|PM|am|pm)|\[\d{1,2}:\d{2}\]|.*?\d{1,2}:\d{2}.*)$/i;
+  
+  // Alternative simpler pattern: username (no spaces) followed by colon and time
+  const simpleMessagePattern = /^([A-Za-z0-9_@-]+):\s*(\d{1,2}[:\d]\s*(AM|PM|am|pm)?|\[?\d{1,2}:\d{2}\]?)/i;
   
   for (const line of lines) {
     const trimmedLine = line.trim();
     if (!trimmedLine) continue;
     
-    const match = trimmedLine.match(messagePattern);
+    // Try to match the pattern
+    let match = trimmedLine.match(simpleMessagePattern);
     
-    if (match) {
+    // If no match with simple pattern, check if line looks like a message continuation
+    // by seeing if it starts with common sentence patterns (lowercase, punctuation mid-sentence)
+    const looksLikeContinuation = /^[a-z]/.test(trimmedLine) || 
+                                   /^[^A-Za-z0-9]/.test(trimmedLine) ||
+                                   trimmedLine.includes(':)') ||
+                                   trimmedLine.includes(':(') ||
+                                   trimmedLine.includes('<3');
+    
+    if (match && !looksLikeContinuation) {
       // Save previous message if exists
       if (currentMessage) {
         messages.push(currentMessage);
@@ -643,16 +657,13 @@ function parseImportedText(text, sessionId) {
       
       // Start new message
       const username = match[1].trim();
-      const timeOrContent = match[2].trim();
-      
-      // Check if this is just a time (e.g., "08 PM") or actual content
-      const isTimeOnly = /^\d{1,2}\s*(AM|PM|am|pm)/i.test(timeOrContent);
+      const restOfLine = trimmedLine.substring(username.length + 1).trim();
       
       currentMessage = {
         id: `${sessionId}-${messageIdCounter++}`,
         type: 'message',
         author: username,
-        content: isTimeOnly ? '' : timeOrContent,
+        content: restOfLine,
         timestamp: new Date().toISOString(),
         rawHtml: ''
       };
@@ -663,6 +674,17 @@ function parseImportedText(text, sessionId) {
       } else {
         currentMessage.content = trimmedLine;
       }
+    } else {
+      // No current message and line doesn't match pattern - treat as standalone with unknown author
+      // This handles cases where the format doesn't match expected pattern
+      currentMessage = {
+        id: `${sessionId}-${messageIdCounter++}`,
+        type: 'message',
+        author: 'Unknown',
+        content: trimmedLine,
+        timestamp: new Date().toISOString(),
+        rawHtml: ''
+      };
     }
   }
   
