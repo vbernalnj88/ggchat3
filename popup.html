@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Archiver</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 450px;
+      min-height: 500px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e0e0e0;
+      overflow-x: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .nav-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .nav-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #a0a0a0;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+    }
+
+    .nav-tab:hover {
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+    }
+
+    .nav-tab.active {
+      background: rgba(102, 126, 234, 0.2);
+      color: #667eea;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .content {
+      padding: 16px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: #e0e0e0;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .user-list, .session-list, .message-list {
+      list-style: none;
+    }
+
+    .user-item, .session-item {
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .user-item:hover, .session-item:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(102, 126, 234, 0.5);
+      transform: translateX(4px);
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #fff;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-meta {
+      font-size: 11px;
+      color: #a0a0a0;
+    }
+
+    .session-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .session-meta {
+      font-size: 11px;
+      color: #a0a0a0;
+    }
+
+    .message-item {
+      background: rgba(255,255,255,0.03);
+      border-left: 3px solid #667eea;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .message-author {
+      font-weight: 600;
+      font-size: 13px;
+      color: #667eea;
+      cursor: pointer;
+    }
+
+    .message-author:hover {
+      text-decoration: underline;
+    }
+
+    .message-timestamp {
+      font-size: 10px;
+      color: #666;
+    }
+
+    .message-content {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #d0d0d0;
+    }
+
+    .message-type-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 6px;
+    }
+
+    .badge-task {
+      background: #f59e0b;
+      color: #000;
+    }
+
+    .badge-continuation {
+      background: #6b7280;
+      color: #fff;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      color: #667eea;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .back-btn:hover {
+      color: #8b9cf7;
+    }
+
+    /* Import Tab */
+    textarea {
+      width: 100%;
+      height: 200px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 12px;
+      color: #e0e0e0;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: #a0a0a0;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .profile-field {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(102, 126, 234, 0.2);
+      border-radius: 4px;
+      font-size: 10px;
+      color: #667eea;
+      margin-left: 6px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(102, 126, 234, 0.5);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(102, 126, 234, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>💬 Chat Archiver</h1>
+    <p>Archive and browse chat history</p>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-view="users">Users</button>
+    <button class="nav-tab" data-view="sessions">Sessions</button>
+    <button class="nav-tab" data-view="import">Import</button>
+  </div>
+
+  <div class="content">
+    <!-- Users View -->
+    <div id="users-view" class="view active">
+      <ul id="user-list" class="user-list">
+        <!-- Populated by JS -->
+      </ul>
+    </div>
+
+    <!-- Sessions View -->
+    <div id="sessions-view" class="view">
+      <div id="all-sessions">
+        <ul id="session-list" class="session-list">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+      <div id="user-sessions" style="display: none;">
+        <button class="back-btn" onclick="showAllSessionsView()">← Back to All Sessions</button>
+        <h3 style="margin-bottom: 12px; font-size: 14px; color: #fff;">Sessions for <span id="current-user" style="color: #667eea;"></span></h3>
+        <ul id="user-session-list" class="session-list">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Messages View -->
+    <div id="messages-view" class="view">
+      <button class="back-btn" onclick="backToSessions()">← Back</button>
+      <h3 style="margin-bottom: 12px; font-size: 14px; color: #fff;">Session Messages</h3>
+      <div id="message-container" style="max-height: 400px; overflow-y: auto;">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Profile View -->
+    <div id="profile-view" class="view">
+      <button class="back-btn" onclick="backToUsers()">← Back</button>
+      <h3 style="margin-bottom: 16px; font-size: 14px; color: #fff;">Edit Profile: <span id="profile-username" style="color: #667eea;"></span></h3>
+      <form id="profile-form">
+        <div class="form-group">
+          <label>Alias</label>
+          <input type="text" id="profile-alias" placeholder="Enter alias">
+        </div>
+        <div class="form-group">
+          <label>Tags (comma-separated)</label>
+          <input type="text" id="profile-tags" placeholder="tag1, tag2, tag3">
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <input type="text" id="profile-gender" placeholder="Enter gender">
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="text" id="profile-age" placeholder="Enter age">
+        </div>
+        <div class="form-group">
+          <label>Kinks</label>
+          <input type="text" id="profile-kinks" placeholder="Enter kinks">
+        </div>
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+      </form>
+    </div>
+
+    <!-- Import View -->
+    <div id="import-view" class="view">
+      <div class="form-group">
+        <label>Paste chat history (format: username:time message)</label>
+        <textarea id="import-text" placeholder="femmygb5:08 PM
+No, just feminine. In act and dress
+vbernalnj5:08 PM
+cool"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Session ID (optional, will generate if empty)</label>
+        <input type="text" id="import-session-id" placeholder="UUID or leave blank">
+      </div>
+      <button class="btn btn-primary" onclick="importChatData()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 2v8m0 0l-3-3m3 3l3-3M2 12h4"/>
+        </svg>
+        Import Chat
+      </button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
