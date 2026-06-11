@@ -389,7 +389,8 @@ async function showSessionMessages(sessionId) {
       }
 
       const authorDisplay = msg.author || 'Unknown';
-      const profile = profiles[msg.author] || {};
+      const authorId = msg.authorId || null;
+      const profile = profiles[authorDisplay] || {};
       const inlineInfo = [];
       
       if (profile.age) inlineInfo.push(profile.age);
@@ -398,11 +399,17 @@ async function showSessionMessages(sessionId) {
       const inlineHtml = inlineInfo.length > 0 
         ? `<span class="profile-field">${inlineInfo.join(' • ')}</span>` 
         : '';
+      
+      // Check if authorId is different from author (i.e., we have a @username)
+      const hasAtUsername = authorId && authorId !== authorDisplay && authorId.startsWith('@');
+      const atUsernameHtml = hasAtUsername 
+        ? `<span class="profile-field" title="@username">@${escapeHtml(authorId.substring(1))}</span>` 
+        : '';
 
       div.innerHTML = `
         <div class="message-header">
-          <span class="message-author" data-username="${escapeHtml(authorDisplay)}">
-            ${escapeHtml(authorDisplay)}${inlineHtml}${typeBadge}
+          <span class="message-author" data-username="${escapeHtml(authorDisplay)}" data-userid="${escapeHtml(authorId || '')}">
+            ${escapeHtml(authorDisplay)}${atUsernameHtml}${inlineHtml}${typeBadge}
           </span>
           <span class="message-timestamp">${formatTimestamp(msg.timestamp)}</span>
         </div>
@@ -414,7 +421,8 @@ async function showSessionMessages(sessionId) {
       if (authorEl) {
         authorEl.addEventListener('click', (e) => {
           e.stopPropagation();
-          const username = authorEl.getAttribute('data-username');
+          // Use authorId (stable @username) if available, otherwise fall back to author display name
+          const username = authorEl.getAttribute('data-userid') || authorEl.getAttribute('data-username');
           openUserProfile(username);
         });
       }
