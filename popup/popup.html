@@ -354,7 +354,7 @@
         </ul>
       </div>
       <div id="user-sessions" style="display: none;">
-        <button class="back-btn" onclick="showAllSessionsView()">← Back to All Sessions</button>
+        <button id="back-to-all-sessions-btn" class="back-btn">← Back to All Sessions</button>
         <h3 style="margin-bottom: 12px; font-size: 14px; color: #fff;">Sessions for <span id="current-user" style="color: #667eea;"></span></h3>
         <ul id="user-session-list" class="session-list">
           <!-- Populated by JS -->
@@ -364,7 +364,7 @@
 
     <!-- Messages View -->
     <div id="messages-view" class="view">
-      <button class="back-btn" onclick="backToSessions()">← Back</button>
+      <button id="back-to-sessions-btn" class="back-btn">← Back</button>
       <h3 style="margin-bottom: 12px; font-size: 14px; color: #fff;">Session Messages</h3>
       <div id="message-container" style="max-height: 400px; overflow-y: auto;">
         <!-- Populated by JS -->
@@ -373,7 +373,7 @@
 
     <!-- Profile View -->
     <div id="profile-view" class="view">
-      <button class="back-btn" onclick="backToUsers()">← Back</button>
+      <button id="back-to-users-btn" class="back-btn">← Back</button>
       <h3 style="margin-bottom: 16px; font-size: 14px; color: #fff;">Edit Profile: <span id="profile-username" style="color: #667eea;"></span></h3>
       <form id="profile-form">
         <div class="form-group">
@@ -413,7 +413,7 @@ cool"></textarea>
         <label>Session ID (optional, will generate if empty)</label>
         <input type="text" id="import-session-id" placeholder="UUID or leave blank">
       </div>
-      <button class="btn btn-primary" onclick="importChatData()">
+      <button id="import-btn" class="btn btn-primary">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M8 2v8m0 0l-3-3m3 3l3-3M2 12h4"/>
         </svg>
