@@ -5,6 +5,9 @@
   // Username lookup map: displayName -> @username
   const usernameLookup = new Map();
   
+  // Track messages with missing @username for verification
+  const messagesMissingUsername = new Set();
+  
   // Polling interval for checking profile modal (in ms)
   const PROFILE_MODAL_POLL_INTERVAL = 1000;
   
@@ -170,7 +173,18 @@
         }
       }
       
+      // Track messages missing @username for verification
+      if (!atUsername && username) {
+        const authorKey = `${username}`;
+        if (!messagesMissingUsername.has(authorKey)) {
+          messagesMissingUsername.add(authorKey);
+          console.warn('[Chat Archiver] Missing @username for display name:', username, '- Chat ingestion requires verification');
+        }
+      }
+      
       // Use @username as the unique identifier if available, otherwise fall back to display username
+      // BUT: if @username is missing, mark it as needing verification
+      const needsVerification = !atUsername && username;
       const uniqueAuthorId = atUsername || username;
       
       // Auto-inject @username badge if we found one via lookup and it's not already in the DOM
@@ -262,6 +276,7 @@
         author: username,
         authorId: uniqueAuthorId,  // Stable identifier that doesn't change with display name
         atUsername: atUsername || null,  // The @username if found
+        needsVerification: needsVerification,  // Flag if @username is missing and requires verification
         avatar: avatarUrl,
         content: content,
         timestamp: timestamp,
@@ -489,6 +504,33 @@
       
       if (messages.length === 0) {
         console.warn('[Chat Archiver] No messages parsed! Check selectors.');
+      }
+      
+      // Check for messages with missing @username that need verification
+      const messagesNeedingVerification = messages.filter(m => m.needsVerification);
+      if (messagesNeedingVerification.length > 0) {
+        const uniqueAuthors = new Set(messagesNeedingVerification.map(m => m.author));
+        const authorList = Array.from(uniqueAuthors).join(', ');
+        
+        // Show warning and ask for confirmation before proceeding
+        const confirmed = confirm(
+          `WARNING: Missing @username for ${uniqueAuthors.size} user(s): ${authorList}\n\n` +
+          `Chat history may be incomplete or inaccurate without verified usernames.\n\n` +
+          `Do you want to proceed with ingestion anyway?`
+        );
+        
+        if (!confirmed) {
+          isSyncing = false;
+          syncButton.disabled = false;
+          syncButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 8a6 6 0 1 1-1.7-4.2M14 2v4h-4"/>
+            </svg>
+            Sync Chat
+          `;
+          showNotification('Sync cancelled. Please view user profiles to capture @usernames.', 'info');
+          return;
+        }
       }
       
       // Send to background script for storage and server sync
