@@ -390,6 +390,15 @@ async function showSessionMessages(sessionId) {
 
       const authorDisplay = msg.author || 'Unknown';
       const authorId = msg.authorId || null;
+      
+      // DEBUG LOGGING
+      console.log('[Popup Debug] Message author info:', {
+        authorDisplay: authorDisplay,
+        authorId: authorId,
+        atUsername: msg.atUsername,
+        fullMessage: msg
+      });
+      
       const profile = profiles[authorDisplay] || {};
       const inlineInfo = [];
       
