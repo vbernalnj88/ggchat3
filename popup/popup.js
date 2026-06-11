@@ -401,9 +401,10 @@ async function showSessionMessages(sessionId) {
         : '';
       
       // Check if authorId is different from author (i.e., we have a @username)
-      const hasAtUsername = authorId && authorId !== authorDisplay && authorId.startsWith('@');
+      // authorId is the stable @username without the '@' prefix
+      const hasAtUsername = authorId && authorId !== authorDisplay;
       const atUsernameHtml = hasAtUsername 
-        ? `<span class="profile-field" title="@username">@${escapeHtml(authorId.substring(1))}</span>` 
+        ? `<span class="profile-field" title="@username">@${escapeHtml(authorId)}</span>` 
         : '';
 
       div.innerHTML = `
