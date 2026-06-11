@@ -542,8 +542,12 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
 
 // Import chat data
 async function importChatData() {
+  console.log('[Import] importChatData called');
   const text = document.getElementById('import-text').value.trim();
   let sessionId = document.getElementById('import-session-id').value.trim();
+  
+  console.log('[Import] Text length:', text.length);
+  console.log('[Import] Session ID:', sessionId);
   
   if (!text) {
     alert('Please paste some chat text to import');
@@ -553,10 +557,17 @@ async function importChatData() {
   // Generate session ID if not provided
   if (!sessionId) {
     sessionId = generateUUID();
+    console.log('[Import] Generated session ID:', sessionId);
   }
   
   try {
     const messages = parseImportedText(text, sessionId);
+    console.log('[Import] Parsed messages:', messages.length);
+    
+    if (messages.length === 0) {
+      alert('No messages could be parsed from the input. Please check the format.');
+      return;
+    }
     
     const response = await chrome.runtime.sendMessage({ 
       action: 'importChatData',
@@ -565,6 +576,8 @@ async function importChatData() {
         messages: messages
       }
     });
+    
+    console.log('[Import] Response:', response);
     
     if (response.success) {
       alert(`Successfully imported ${response.messageCount} messages from ${response.userCount} user(s)!`);
@@ -575,13 +588,14 @@ async function importChatData() {
       alert('Error importing: ' + response.error);
     }
   } catch (error) {
-    console.error('Error importing chat:', error);
-    alert('Error importing chat data');
+    console.error('[Import] Error importing chat:', error);
+    alert('Error importing chat data: ' + error.message);
   }
 }
 
 // Parse imported text format: "username:time message" or "username:time\nmessage"
 function parseImportedText(text, sessionId) {
+  console.log('[Parse] Starting to parse text');
   const messages = [];
   const lines = text.split('\n');
   let currentMessage = null;
@@ -632,6 +646,7 @@ function parseImportedText(text, sessionId) {
     messages.push(currentMessage);
   }
   
+  console.log('[Parse] Parsed', messages.length, 'messages');
   return messages;
 }
 
