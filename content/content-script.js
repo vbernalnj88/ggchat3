@@ -593,23 +593,23 @@
         const displayNameEl = profileModal.querySelector('h3#mp-profile-heading span.truncate');
         const displayName = displayNameEl ? displayNameEl.textContent.trim() : '';
         
-        // Extract @username from the paragraph below the heading
-        const usernameEl = profileModal.querySelector('p.text-xs.text-gray-500');
+        // Extract @username from the href of the link inside/after mp-profile-heading (more reliable)
         let atUsername = '';
-        if (usernameEl) {
-          const usernameText = usernameEl.textContent.trim();
-          // Remove the @ symbol if present
-          atUsername = usernameText.replace(/^@/, '');
+        const profileLink = profileModal.querySelector('h3#mp-profile-heading a[href*="/profile/"]');
+        if (profileLink) {
+          const hrefMatch = profileLink.href.match(/\/profile\/([@\w-]+)/i);
+          if (hrefMatch) {
+            atUsername = hrefMatch[1].replace(/^@/, '');
+          }
         }
         
-        // Also check for @username in the profile link href
+        // Fallback: try to extract @username from the paragraph below the heading
         if (!atUsername) {
-          const profileLink = profileModal.querySelector('a[href*="/profile/"]');
-          if (profileLink) {
-            const hrefMatch = profileLink.href.match(/\/profile\/([@\w-]+)/i);
-            if (hrefMatch) {
-              atUsername = hrefMatch[1].replace(/^@/, '');
-            }
+          const usernameEl = profileModal.querySelector('p.text-xs.text-gray-500');
+          if (usernameEl) {
+            const usernameText = usernameEl.textContent.trim();
+            // Remove the @ symbol if present
+            atUsername = usernameText.replace(/^@/, '');
           }
         }
         
