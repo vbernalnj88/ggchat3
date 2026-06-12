@@ -51,6 +51,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
+  
+  if (request.action === 'exportAllData') {
+    handleExportAllData()
+      .then(data => sendResponse({ success: true, data }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+  
+  if (request.action === 'importExportedData') {
+    handleImportExportedData(request.data)
+      .then(response => sendResponse(response))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
 });
 
 // Handle chat sync
@@ -369,6 +383,111 @@ async function handleImportChatData(data) {
     };
   } catch (error) {
     console.error('[Chat Archiver] Import failed:', error);
+    throw error;
+  }
+}
+
+// Export all data (sessions and profiles) for backup/transfer
+async function handleExportAllData() {
+  try {
+    const allSessions = await chrome.storage.local.get(['allSessions']);
+    const sessionsList = allSessions.allSessions || [];
+    
+    const profiles = await chrome.storage.local.get(['userProfiles']);
+    const userProfiles = profiles.userProfiles || {};
+    
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      sessions: [],
+      userProfiles: userProfiles
+    };
+    
+    // Collect all session data
+    for (const sessionId of sessionsList) {
+      const sessionData = await chrome.storage.local.get([`session_${sessionId}`]);
+      const data = sessionData[`session_${sessionId}`];
+      
+      if (data) {
+        exportData.sessions.push({
+          sessionId: data.sessionId,
+          url: data.url,
+          lastSynced: data.lastSynced,
+          messages: data.messages || [],
+          users: data.users || [],
+          userAliases: data.userAliases || {}
+        });
+      }
+    }
+    
+    return exportData;
+  } catch (error) {
+    console.error('[Chat Archiver] Export failed:', error);
+    throw error;
+  }
+}
+
+// Import exported data from backup file
+async function handleImportExportedData(exportData) {
+  try {
+    if (!exportData || !exportData.sessions || !Array.isArray(exportData.sessions)) {
+      throw new Error('Invalid export data format');
+    }
+    
+    let importedSessions = 0;
+    let importedProfiles = 0;
+    
+    // Import sessions
+    const sessionsList = [];
+    for (const session of exportData.sessions) {
+      const storageKey = `session_${session.sessionId}`;
+      const sessionData = {
+        sessionId: session.sessionId,
+        url: session.url,
+        lastSynced: session.lastSynced,
+        messages: session.messages || [],
+        users: session.users || [],
+        userAliases: session.userAliases || {}
+      };
+      
+      await chrome.storage.local.set({ [storageKey]: sessionData });
+      sessionsList.push(session.sessionId);
+      importedSessions++;
+    }
+    
+    // Update sessions list
+    if (sessionsList.length > 0) {
+      const existingSessions = await chrome.storage.local.get(['allSessions']);
+      const currentList = existingSessions.allSessions || [];
+      
+      // Merge with existing sessions (avoid duplicates)
+      const mergedList = [...new Set([...currentList, ...sessionsList])];
+      await chrome.storage.local.set({ allSessions: mergedList });
+    }
+    
+    // Import user profiles
+    if (exportData.userProfiles && Object.keys(exportData.userProfiles).length > 0) {
+      const existingProfiles = await chrome.storage.local.get(['userProfiles']);
+      const currentProfiles = existingProfiles.userProfiles || {};
+      
+      // Merge profiles (import takes precedence)
+      const mergedProfiles = {
+        ...currentProfiles,
+        ...exportData.userProfiles
+      };
+      
+      await chrome.storage.local.set({ userProfiles: mergedProfiles });
+      importedProfiles = Object.keys(exportData.userProfiles).length;
+    }
+    
+    return {
+      success: true,
+      message: `Successfully imported ${importedSessions} session(s) and ${importedProfiles} profile(s)`,
+      sessionsCount: importedSessions,
+      profilesCount: importedProfiles
+    };
+  } catch (error) {
+    console.error('[Chat Archiver] Import exported data failed:', error);
     throw error;
   }
 }

@@ -37,11 +37,21 @@ function setupNavigation() {
   }
 }
 
-// Setup import button
+// Setup import/export buttons
 function setupImportButton() {
   const importBtn = document.getElementById('import-btn');
   if (importBtn) {
     importBtn.addEventListener('click', importChatData);
+  }
+  
+  const exportBtn = document.getElementById('export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportAllData);
+  }
+  
+  const importFileBtn = document.getElementById('import-file-btn');
+  if (importFileBtn) {
+    importFileBtn.addEventListener('click', importFromFile);
   }
 }
 
@@ -708,10 +718,6 @@ function parseImportedText(text, sessionId) {
   return messages;
 }
 
-  console.log('[Parse] Parsed', messages.length, 'messages');
-  return messages;
-}
-
 // Helper functions
 function escapeHtml(text) {
   if (!text) return '';
@@ -764,3 +770,94 @@ function showEmptyState(elementId, message) {
 // window.backToUsers = backToUsers;
 // window.backToSessions = backToSessions;
 // window.importChatData = importChatData;
+
+// Export all data for backup/transfer between computers
+async function exportAllData() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: 'exportAllData' });
+    
+    if (!response.success) {
+      alert('Error exporting data: ' + response.error);
+      return;
+    }
+    
+    const exportData = response.data;
+    const jsonString = JSON.stringify(exportData, null, 2);
+    
+    // Create download link
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-archiver-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log('[Export] Successfully exported data:', {
+      sessionsCount: exportData.sessions.length,
+      profilesCount: Object.keys(exportData.userProfiles).length
+    });
+  } catch (error) {
+    console.error('[Export] Error exporting data:', error);
+    alert('Error exporting data: ' + error.message);
+  }
+}
+
+// Import data from exported JSON file
+async function importFromFile() {
+  const fileInput = document.getElementById('import-file-input');
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    alert('Please select a JSON file to import');
+    return;
+  }
+  
+  try {
+    const fileContent = await readFileAsText(file);
+    const exportData = JSON.parse(fileContent);
+    
+    // Validate the export data format
+    if (!exportData || !exportData.sessions || !Array.isArray(exportData.sessions)) {
+      throw new Error('Invalid export file format. Expected a Chat Archiver export file.');
+    }
+    
+    const response = await chrome.runtime.sendMessage({ 
+      action: 'importExportedData',
+      data: exportData 
+    });
+    
+    if (!response.success) {
+      alert('Error importing data: ' + response.error);
+      return;
+    }
+    
+    alert(response.message || 'Successfully imported data!');
+    
+    // Clear the file input
+    fileInput.value = '';
+    
+    // Reload users list
+    loadUsers();
+    
+    console.log('[Import File] Successfully imported:', {
+      sessionsCount: response.sessionsCount,
+      profilesCount: response.profilesCount
+    });
+  } catch (error) {
+    console.error('[Import File] Error importing data:', error);
+    alert('Error importing file: ' + error.message);
+  }
+}
+
+// Helper function to read file as text
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => resolve(event.target.result);
+    reader.onerror = (error) => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
+}

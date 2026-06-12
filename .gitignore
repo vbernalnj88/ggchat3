@@ -1,1 +1,112 @@
-Nothing should be ignored based on the provided file changes. The only modified file is `popup/popup.js`, which is a source code file and should not be added to .gitignore.
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+target/
+*.min.js
+*.bundle.js
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+jspm_packages/
+*.min.js
+*.min.css
+
+# Compiled/Binary files
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.o
+*.obj
+*.a
+*.lib
+*.out
+*.app
+*.bin
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Archives
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.rar
+*.7z
+*.gz
+*.bz2
+*.xz
+*.zst
+
+# Testing
+coverage/
+htmlcov/
+.nyc_output/
+istanbul/
+.mocha.opts
+.jest/
+
+# IDE specific
+.vs/
+.vim/
+*.swp
+*.swo
+
+# Configuration
+config/
+secrets/
+credentials/
