@@ -402,6 +402,18 @@
 
     <!-- Import View -->
     <div id="import-view" class="view">
+      <div style="margin-bottom: 20px; padding: 16px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.3);">
+        <h4 style="font-size: 14px; color: #667eea; margin-bottom: 12px;">Backup & Transfer</h4>
+        <p style="font-size: 12px; color: #a0a0a0; margin-bottom: 12px;">Export all your profiles and sessions to a file, then import it on another computer.</p>
+        <button id="export-btn" class="btn btn-secondary" style="margin-bottom: 8px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 2v8m0 0l3-3m-3 3l-3-3M2 12h4"/>
+          </svg>
+          Export All Data
+        </button>
+      </div>
+      
+      <h4 style="font-size: 14px; color: #fff; margin-bottom: 12px;">Import Chat Text</h4>
       <div class="form-group">
         <label>Paste chat history (format: username:time message)</label>
         <textarea id="import-text" placeholder="femmygb5:08 PM
@@ -418,6 +430,18 @@ cool"></textarea>
           <path d="M8 2v8m0 0l-3-3m3 3l3-3M2 12h4"/>
         </svg>
         Import Chat
+      </button>
+      
+      <h4 style="font-size: 14px; color: #fff; margin-top: 20px; margin-bottom: 12px;">Import Backup File</h4>
+      <div class="form-group">
+        <label>Select exported JSON file</label>
+        <input type="file" id="import-file-input" accept=".json" style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e0e0e0; font-size: 13px; width: 100%;">
+      </div>
+      <button id="import-file-btn" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 2v8m0 0l3-3m-3 3l-3-3M2 12h4"/>
+        </svg>
+        Import from File
       </button>
     </div>
   </div>
