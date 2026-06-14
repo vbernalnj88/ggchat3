@@ -45,6 +45,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   
+  if (request.action === 'deleteUser') {
+    handleDeleteUser(request.username)
+      .then(response => sendResponse(response))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+  
   if (request.action === 'importChatData') {
     handleImportChatData(request.data)
       .then(response => sendResponse(response))
@@ -305,6 +312,53 @@ async function handleUpdateUserProfile(username, profileData) {
     return allProfiles[username];
   } catch (error) {
     console.error('[Chat Archiver] Update user profile failed:', error);
+    throw error;
+  }
+}
+
+// Delete user and all associated data (sessions, messages, profile)
+async function handleDeleteUser(username) {
+  try {
+    // Get all sessions
+    const allSessions = await chrome.storage.local.get(['allSessions']);
+    const sessionsList = allSessions.allSessions || [];
+    
+    // Find all sessions that belong to this user
+    const userSessionIds = [];
+    for (const sessionId of sessionsList) {
+      const sessionData = await chrome.storage.local.get([`session_${sessionId}`]);
+      const data = sessionData[`session_${sessionId}`];
+      
+      if (data && data.users && data.users.includes(username)) {
+        userSessionIds.push(sessionId);
+      }
+    }
+    
+    // Delete all sessions belonging to this user
+    const keysToDelete = userSessionIds.map(id => `session_${id}`);
+    if (keysToDelete.length > 0) {
+      await chrome.storage.local.remove(keysToDelete);
+    }
+    
+    // Update the allSessions list to remove deleted session IDs
+    const remainingSessions = sessionsList.filter(id => !userSessionIds.includes(id));
+    await chrome.storage.local.set({ allSessions: remainingSessions });
+    
+    // Delete user profile
+    const profiles = await chrome.storage.local.get(['userProfiles']);
+    const allProfiles = profiles.userProfiles || {};
+    delete allProfiles[username];
+    await chrome.storage.local.set({ userProfiles: allProfiles });
+    
+    console.log(`[Chat Archiver] Deleted user ${username}: ${userSessionIds.length} session(s) removed`);
+    
+    return {
+      success: true,
+      message: `Deleted user ${username} and ${userSessionIds.length} associated session(s)`,
+      deletedSessionsCount: userSessionIds.length
+    };
+  } catch (error) {
+    console.error('[Chat Archiver] Delete user failed:', error);
     throw error;
   }
 }

@@ -697,6 +697,35 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
   }
 });
 
+// Delete user button handler
+document.getElementById('delete-user-btn').addEventListener('click', async () => {
+  const username = document.getElementById('profile-username').textContent;
+  
+  // Confirm dialog before deleting
+  const confirmed = confirm(`Are you sure you want to delete user "${username}"?\n\nThis will permanently delete:\n- All sessions belonging to this user\n- All messages in those sessions\n- The user's profile (tags, notes, etc.)\n\nThis action cannot be undone.`);
+  
+  if (!confirmed) {
+    return;
+  }
+  
+  try {
+    const response = await chrome.runtime.sendMessage({ 
+      action: 'deleteUser', 
+      username: username
+    });
+    
+    if (response.success) {
+      alert(response.message);
+      backToUsers();
+    } else {
+      alert('Error deleting user: ' + response.error);
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    alert('Error deleting user: ' + error.message);
+  }
+});
+
 // Import chat data
 async function importChatData() {
   console.log('[Import] importChatData called');
