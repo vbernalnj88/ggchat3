@@ -2,11 +2,40 @@
 let currentView = 'users';
 let currentUser = null;
 let currentSessionId = null;
+let allUsersData = []; // Store all users for search filtering
+
+// Color mapping for tags (consistent color per unique tag)
+const tagColorMap = new Map();
+let nextTagColorIndex = 1;
+
+// Get consistent color index for a tag
+function getTagColorIndex(tag) {
+  const normalizedTag = tag.trim().toLowerCase();
+  if (!tagColorMap.has(normalizedTag)) {
+    tagColorMap.set(normalizedTag, ((nextTagColorIndex - 1) % 15) + 1);
+    nextTagColorIndex++;
+  }
+  return tagColorMap.get(normalizedTag);
+}
+
+// Generate HTML for tag flairs
+function generateTagFlairsHtml(tagsString) {
+  if (!tagsString || !tagsString.trim()) return '';
+  
+  const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
+  if (tags.length === 0) return '';
+  
+  return tags.map(tag => {
+    const colorIndex = getTagColorIndex(tag);
+    return `<span class="tag-flair tag-flair-${colorIndex}" title="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`;
+  }).join('');
+}
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupImportButton();
+  setupSearchBars();
   loadUsers();
 });
 
@@ -55,6 +84,66 @@ function setupImportButton() {
   }
 }
 
+// Setup search bars for users and sessions tabs
+function setupSearchBars() {
+  const userSearch = document.getElementById('user-search');
+  if (userSearch) {
+    userSearch.addEventListener('input', (e) => {
+      filterUsers(e.target.value);
+    });
+  }
+  
+  const sessionSearch = document.getElementById('session-search');
+  if (sessionSearch) {
+    sessionSearch.addEventListener('input', (e) => {
+      filterSessions(e.target.value);
+    });
+  }
+}
+
+// Filter users based on search query
+function filterUsers(query) {
+  const searchTerm = query.toLowerCase().trim();
+  const userList = document.getElementById('user-list');
+  const items = userList.querySelectorAll('.user-item');
+  
+  items.forEach(item => {
+    const userName = item.querySelector('.user-name').textContent.toLowerCase();
+    const tags = item.getAttribute('data-tags') || '';
+    const notes = item.getAttribute('data-notes') || '';
+    
+    const matchesSearch = !searchTerm || 
+                          userName.includes(searchTerm) || 
+                          tags.toLowerCase().includes(searchTerm) ||
+                          notes.toLowerCase().includes(searchTerm);
+    
+    item.style.display = matchesSearch ? '' : 'none';
+  });
+}
+
+// Filter sessions based on search query
+function filterSessions(query) {
+  const searchTerm = query.toLowerCase().trim();
+  let sessionList;
+  
+  // Determine which session list to filter based on current view
+  if (currentUser) {
+    sessionList = document.getElementById('user-session-list');
+  } else {
+    sessionList = document.getElementById('session-list');
+  }
+  
+  if (!sessionList) return;
+  
+  const items = sessionList.querySelectorAll('.session-item');
+  
+  items.forEach(item => {
+    const sessionText = item.textContent.toLowerCase();
+    const matchesSearch = !searchTerm || sessionText.includes(searchTerm);
+    item.style.display = matchesSearch ? '' : 'none';
+  });
+}
+
 // Switch between views
 function switchView(viewName) {
   // Update tab states
@@ -69,6 +158,12 @@ function switchView(viewName) {
   document.getElementById(`${viewName}-view`).classList.add('active');
 
   currentView = viewName;
+  
+  // Show/hide session search bar based on view
+  const sessionSearch = document.getElementById('session-search');
+  if (sessionSearch) {
+    sessionSearch.style.display = (viewName === 'sessions' && !currentUser) ? 'block' : 'none';
+  }
 
   // Load data based on view
   if (viewName === 'users') {
@@ -91,8 +186,11 @@ async function loadUsers() {
     if (response.success && response.users.length > 0) {
       const userList = document.getElementById('user-list');
       userList.innerHTML = '';
+      
+      // Store users for search filtering
+      allUsersData = response.users;
 
-      response.users.forEach(user => {
+      response.users.forEach(async user => {
         const li = document.createElement('li');
         li.className = 'user-item';
         
@@ -101,10 +199,32 @@ async function loadUsers() {
         const displayName = user.username || user.userId;
         const atUsername = hasAtUsername ? user.userId : null;
         
+        // Get user profile for tags and notes
+        let profile = {};
+        try {
+          const profileResponse = await chrome.runtime.sendMessage({
+            action: 'getUserProfile',
+            username: user.userId
+          });
+          if (profileResponse.success) {
+            profile = profileResponse.profile;
+          }
+        } catch (e) {
+          console.error('Error loading profile for user:', user.userId, e);
+        }
+        
+        // Generate tag flairs HTML
+        const tagFlairsHtml = generateTagFlairsHtml(profile.tags || '');
+        
+        // Store tags and notes as data attributes for search
+        li.setAttribute('data-tags', profile.tags || '');
+        li.setAttribute('data-notes', profile.notes || '');
+        
         li.innerHTML = `
           <div class="user-name">
             ${escapeHtml(displayName)}
             ${atUsername ? `<span class="profile-field" title="@username">@${escapeHtml(atUsername.substring(1))}</span>` : ''}
+            ${tagFlairsHtml}
             <span class="profile-field" title="Click to edit profile" data-edit-profile="${escapeHtml(user.userId)}">✏️</span>
           </div>
           <div class="user-meta">${user.sessions.length} session(s)</div>
@@ -518,7 +638,8 @@ async function openUserProfile(username) {
       document.getElementById('profile-tags').value = profile.tags || '';
       document.getElementById('profile-gender').value = profile.gender || '';
       document.getElementById('profile-age').value = profile.age || '';
-      document.getElementById('profile-kinks').value = profile.kinks || '';
+      document.getElementById('profile-notes').value = profile.notes || '';
+        document.getElementById('profile-kinks').value = profile.kinks || '';
       
       switchView('profile');
     }
@@ -553,7 +674,8 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
     tags: document.getElementById('profile-tags').value,
     gender: document.getElementById('profile-gender').value,
     age: document.getElementById('profile-age').value,
-    kinks: document.getElementById('profile-kinks').value
+    kinks: document.getElementById('profile-kinks').value,
+      notes: document.getElementById('profile-notes').value
   };
   
   try {

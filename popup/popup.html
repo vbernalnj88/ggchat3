@@ -294,6 +294,54 @@
       margin-left: 6px;
     }
 
+    /* Tag flairs - color coded */
+    .tag-flair {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 4px;
+      margin-right: 2px;
+    }
+
+    .tag-flair-1 { background: #ef4444; color: #fff; }
+    .tag-flair-2 { background: #f97316; color: #fff; }
+    .tag-flair-3 { background: #f59e0b; color: #000; }
+    .tag-flair-4 { background: #84cc16; color: #000; }
+    .tag-flair-5 { background: #22c55e; color: #fff; }
+    .tag-flair-6 { background: #10b981; color: #fff; }
+    .tag-flair-7 { background: #06b6d4; color: #fff; }
+    .tag-flair-8 { background: #3b82f6; color: #fff; }
+    .tag-flair-9 { background: #6366f1; color: #fff; }
+    .tag-flair-10 { background: #8b5cf6; color: #fff; }
+    .tag-flair-11 { background: #d946ef; color: #fff; }
+    .tag-flair-12 { background: #ec4899; color: #fff; }
+    .tag-flair-13 { background: #f43f5e; color: #fff; }
+    .tag-flair-14 { background: #14b8a6; color: #fff; }
+    .tag-flair-15 { background: #84cc16; color: #000; }
+
+    .search-bar {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .search-bar:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .search-bar::placeholder {
+      color: #666;
+    }
+
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -341,6 +389,7 @@
   <div class="content">
     <!-- Users View -->
     <div id="users-view" class="view active">
+      <input type="text" id="user-search" class="search-bar" placeholder="Search users...">
       <ul id="user-list" class="user-list">
         <!-- Populated by JS -->
       </ul>
@@ -348,6 +397,7 @@
 
     <!-- Sessions View -->
     <div id="sessions-view" class="view">
+      <input type="text" id="session-search" class="search-bar" placeholder="Search sessions..." style="display: none;">
       <div id="all-sessions">
         <ul id="session-list" class="session-list">
           <!-- Populated by JS -->
@@ -383,6 +433,10 @@
         <div class="form-group">
           <label>Tags (comma-separated)</label>
           <input type="text" id="profile-tags" placeholder="tag1, tag2, tag3">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="profile-notes" placeholder="Add notes about this user..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; font-size: 13px; resize: vertical;"></textarea>
         </div>
         <div class="form-group">
           <label>Gender</label>

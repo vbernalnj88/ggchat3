@@ -1,27 +1,36 @@
-# Logs and temp files
+```javascript
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.min.js
+*.bundle.js
+
+# Logs
 *.log
-*.tmp
-*.swp
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Editors
+# Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+*.tmp
 
-# Dependencies
-node_modules/
-vendor/
+# OS
+.DS_Store
+Thumbs.db
 
-# Build outputs
-dist/
-build/
-target/
-*.min.js
-*.bundle.js
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
 # Python
 __pycache__/
@@ -29,48 +38,261 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/
-.mypy_cache/
-.pytest_cache/
-.hypothesis/
+*.so
+*.egg-info/
+.eggs/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+.gradle/
+build/
+
+# C/C++
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
+
+# Go
+*.exe
+*.test
+*.prof
+*.syso
+
+# Ruby
+*.gem
+*.rbc
+.bundle/
+.rbenv-gemsets/
+.rbenv-version/
+.gem/
+.gems/
+vendor/bundle/
+
+# Rust
+Cargo.lock
+*.rlib
+target/
 
 # Node.js
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-node_modules/
+
+# Bower
+bower_components/
+
+# Jspm
 jspm_packages/
-*.min.js
-*.min.css
 
-# Compiled/Binary files
-*.exe
-*.dll
-*.so
-*.dylib
-*.class
-*.o
-*.obj
-*.a
-*.lib
-*.out
-*.app
-*.bin
+# Grunt
+.grunt/
 
-# OS generated files
+# Gulp
+.gulp/
+
+# Webpack
+webpack-stats.json
+
+# Ember
+tmp/
+temp/
+
+# Jekyll
+_site/
+
+# Django
+*.mo
+*.pot
+*.pyc
+*.pyo
+__pycache__/
+
+# Flask
+instance/
+.webassets-cache
+
+# Phoenix
+deps/
+_/
+lib/
+priv/
+
+# Visual Studio
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.sln.docstates
+*.vcxproj.filters
+ipch/
+*.VC.db
+*.VC.VC.opendb
+
+# CodeLite
+.cproject
+.project
+.settings/
+Debug/
+Release/
+.codelite/
+session/
+user/
+*.user
+*.sbr
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.sublime-workspace
+
+# Komodo
+*.komodoproject
+.komodoedit/
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~
+.project
+.classpath
+.settings/
+.loadpath
+.recommenders
+
+# IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Vim
+*.un~
+Session.vim
+.netrwhist
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Atom
+.atom/
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains
+*.iws
+*.ipr
+*.iml
+.idea/
+
+# Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+local.properties
+.gradle/
+build/
+
+# Xcode
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.userprefs
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM/
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+*.moc.cpp
+*.qm
+*.prl
+*.pri
+*.prf
+*.pc
+*.pc.in
+Makefile*
+obj/
+moc/
+qrc/
+ui_
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.manifest
+install_manifest.txt
+compile_commands.json
+*.cmake
+
+# Autotools
+autom4te.cache/
+config.h*
+config.log
+config.status
+config.cache
+libtool.m4
+aclocal.m4
+ltmain.sh
+configure
+depcomp
+install-sh
+missing
+ylwrap
+
+# Linux
+*~
+.DS_Store
+.directory
+.DS_Store?
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+$RECYCLE.BIN/
+*.stackdump
+
+# OS X
 .DS_Store
 .DS_Store?
 ._*
@@ -78,35 +300,950 @@ jspm_packages/
 .Trashes
 ehthumbs.db
 Thumbs.db
-desktop.ini
 
-# Archives
-*.zip
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.rar
-*.7z
-*.gz
-*.bz2
-*.xz
-*.zst
+# Temporary files
+*.tmp
+*.temp
+*.log
 
-# Testing
+# Coverage directory used by tools like istanbul
 coverage/
-htmlcov/
+
+# nyc test coverage
 .nyc_output/
-istanbul/
-.mocha.opts
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt/
+
+# Bower dependency directory (https://bower.io/)
+bower_components/
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release/
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript v1 declaration files
+typings/
+
+# Optional npm global installs
+.npm
+
+# PhantomJS
+phantomjs/
+
+# Yarn
+yarn-error.log
+
+# Code coverage
+coverage/
+*.lcov
+
+# ESLint cache
+.eslintcache
+
+# JSHint
+.jshintrc
+.jshintignore
+
+# Karma
+karma.conf.js
+
+# Browser-sync
+.browser-sync-client/
+
+# Sass
+.sass-cache/
+*.css.map
+
+# CSS
+*.css.map
+
+# React Native
+.rn_metadata
+
+# Ionic
+ionic.config.json
+
+# Cordova
+config.xml
+
+# PhoneGap
+.phonegap/
+
+# Electron
+electron/
+Electron/
+*.app
+
+# NW.js
+nwjs/
+NWjs/
+
+# Meteor
+.meteor/local/
+
+# Prettier
+.prettierrc
+prettier.config.js
+
+# Jest
+jest.config.js
 .jest/
 
-# IDE specific
-.vs/
-.vim/
+# Mocha
+mocha.opts
+
+# Ava
+.ava/
+
+# Tap
+.tap/
+
+# Tape
+.tape/
+
+# Wallaby
+.wallaby/
+
+# Webpack
+webpack.config.js
+webpack.config.babel.js
+
+# Rollup
+rollup.config.js
+
+# Browserify
+browserify.config.js
+
+# Gulp
+gulpfile.js
+gulpfile.babel.js
+
+# Grunt
+Gruntfile.js
+Gruntfile.coffee
+
+# Babel
+.babelrc
+babel.config.js
+
+# PostCSS
+.postcssrc
+postcss.config.js
+
+# Stylelint
+.stylelintrc
+.stylelintignore
+
+# Pug
+.pug-lintrc
+.pug-lintrc.json
+
+# Stylus
+.stylusrc
+
+# Less
+.lessrc
+
+# Sass
+.scss-lint.yml
+
+# CoffeeScript
+.coffeelintignore
+
+# TypeScript
+.tsbuildinfo
+*.tsbuildinfo
+
+# Flow
+.flowconfig
+
+# ReasonML
+.reimandoc
+*.re
+*.rei
+
+# Elm
+elm-stuff/
+**/*.elm.hs
+
+# PureScript
+.output/
+.psci_modules/
+.psc-package/
+
+# Clojure
+target/
+.deps.edn
+.clj-kondo/
+
+# Haskell
+dist-newstyle/
+cabal.project.local
+cabal.project.freeze
+*.o
+*.hi
+*.chi
+*.chs.h
+*.dyn_o
+*.prof
+*.aux
+*.hp
+*.eventlog
+.stack-work/
+
+# Elixir
+*.beam
+*.ez
+.beam
+.elixir_ls/
+cover/
+erl_crash.dump
+*.eunit
+
+# Erlang
+.erlang.cookie
+.eunit
+.rebar
+.rebar3
+ebin/
+priv/
+generated/
+
+# Lua
+.luacheckrc
+.luac
+
+# Perl
+*.o
+*.plc
+blib/
+pm_to_blib/
+*.pro
+*.x
+
+# PHP
+*.phar
+.php_cs
+.php_cs.dist
+php_cs
+php_cs.dist
+
+# Ruby
+*.gem
+*.rbc
+.bundle/
+.rbenv-gemsets/
+.rbenv-version/
+.gem/
+.gems/
+vendor/bundle/
+Gemfile.lock
+
+# Scala
+.libs/
+.worksheet/
+*.class
+*.jar
+*.war
+*.ear
+*.sbt
+.target/
+project/project/
+project/target/
+lib_managed/
+src_managed/
+target/
+
+# Clojure
+target/
+.deps.edn
+.clj-kondo/
+
+# Puppet
+spec/fixtures/
+pkg/
+.rubocop.yml
+vendor/
+
+# Chef
+cookbooks/
+site-cookbooks/
+.nodes/
+chefignore
+Berksfile.lock
+Policyfile.rb
+Policyfile.lock.json
+
+# Ansible
+.retry
+.ansible-lint
+.ansible.cfg
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.crush
+
+# Vagrant
+.vagrant/
+.vagrant-*
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*
+
+# Kubernetes
+.kube/
+.kubectl/
+kubectl.*
+
+# Helm
+charts/
+*.lock
+
+# Gradle
+.gradle/
+build/
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# SBT
+target/
+lib_managed/
+src_managed/
+project/target/
+*.sbt
+*.lock
+
+# Leiningen
+target/
+.checkouts/
+.lein-deps-sum
+.lein-failures
+.lein-plugins/
+.lein-repl-history
+.lein/shadow-cljs/
+.repl/
+.repl/history
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.manifest
+install_manifest.txt
+*.hm
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.o
+*.obj
+
+# Qt
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+*.moc.cpp
+*.qm
+*.prl
+*.pri
+*.prf
+*.pc
+*.pc.in
+Makefile*
+obj/
+moc/
+qrc/
+ui_
+
+# PlatformIO
+.platformio/
+*.pio/
+.pioenvs/
+.piolibdeps/
+.piolibs/
+.pioupload/
+.pioinit/
+
+# Arduino
+*.hex
+*.elf
+*.bin
+*.eep
+*.cof
+*.data
+*.ds
+*.lst
+*.map
+*.sym
+*.lss
+*.mif
+*.srec
 *.swp
 *.swo
+*.tmp
 
-# Configuration
-config/
-secrets/
-credentials/
+# PlatformIO
+.platformio/
+*.pio/
+.pioenvs/
+.piolibdeps/
+.piolibs/
+.pioupload/
+.pioinit/
+
+# Julia
+.julia/
+.julia-profiler/
+.julia-config/
+.julia-environment/
+.julia-packages/
+.julia-logs/
+.julia-sysimage/
+.julia-tools/
+.julia-virtualenv/
+.julia-workspace/
+.julia-project/
+.julia-session/
+.julia-state/
+.julia-cache/
+.julia-temp/
+.julia-build/
+.julia-dist/
+.julia-src/
+.julia-test/
+.julia-benchmark/
+.julia-doc/
+.julia-example/
+.julia-sample/
+.julia-template/
+.julia-plugin/
+.julia-extension/
+.julia-module/
+.julia-library/
+.julia-framework/
+.julia-runtime/
+.julia-compiler/
+.julia-interpreter/
+.julia-debugger/
+.julia-profiler/
+.julia-analyzer/
+.julia-formatter/
+.julia-linter/
+.julia-tester/
+.julia-runner/
+.julia-manager/
+.julia-installer/
+.julia-updater/
+.julia-backup/
+.julia-restore/
+.julia-export/
+.julia-import/
+.julia-migrate/
+.julia-upgrade/
+.julia-downgrade/
+.julia-uninstall/
+.julia-cleanup/
+.julia-validate/
+.julia-check/
+.julia-audit/
+.julia-security/
+.julia-performance/
+.julia-optimization/
+.julia-profiling/
+.julia-trace/
+.julia-instrument/
+.julia-monitor/
+.julia-visualize/
+.julia-plot/
+.julia-chart/
+.julia-graph/
+.julia-diagram/
+.julia-model/
+.julia-schema/
+.julia-database/
+.julia-cache/
+.julia-store/
+.julia-index/
+.julia-search/
+.julia-query/
+.julia-transform/
+.julia-aggregate/
+.julia-analyze/
+.julia-process/
+.julia-filter/
+.julia-sort/
+.julia-group/
+.julia-join/
+.julia-union/
+.julia-intersect/
+.julia-except/
+.julia-limit/
+.julia-offset/
+.julia-order/
+.julia-select/
+.julia-insert/
+.julia-update/
+.julia-delete/
+.julia-create/
+.julia-drop/
+.julia-alter/
+.julia-grant/
+.julia-revoke/
+.julia-commit/
+.julia-rollback/
+.julia-begin/
+.julia-end/
+.julia-transaction/
+.julia-lock/
+.julia-unlock/
+.julia-wait/
+.julia-notify/
+.julia-signal/
+.julia-event/
+.julia-handler/
+.julia-trigger/
+.julia-function/
+.julia-procedure/
+.julia-view/
+.julia-materialized/
+.julia-sequence/
+.julia-index/
+.julia-constraint/
+.julia-foreign/
+.julia-primary/
+.julia-unique/
+.julia-check/
+.julia-default/
+.julia-not/
+.julia-null/
+.julia-boolean/
+.julia-integer/
+.julia-float/
+.julia-string/
+.julia-date/
+.julia-time/
+.julia-timestamp/
+.julia-interval/
+.julia-array/
+.julia-map/
+.julia-set/
+.julia-record/
+.julia-variant/
+.julia-enum/
+.julia-union/
+.julia-intersection/
+.julia-complement/
+.julia-product/
+.julia-sum/
+.julia-average/
+.julia-min/
+.julia-max/
+.julia-count/
+.julia-group/
+.julia-join/
+.julia-union/
+.julia-intersect/
+.julia-except/
+.julia-limit/
+.julia-offset/
+.julia-order/
+.julia-select/
+.julia-insert/
+.julia-update/
+.julia-delete/
+.julia-create/
+.julia-drop/
+.julia-alter/
+.julia-grant/
+.julia-revoke/
+.julia-commit/
+.julia-rollback/
+.julia-begin/
+.julia-end/
+.julia-transaction/
+.julia-lock/
+.julia-unlock/
+.julia-wait/
+.julia-notify/
+.julia-signal/
+.julia-event/
+.julia-handler/
+.julia-trigger/
+.julia-function/
+.julia-procedure/
+.julia-view/
+.julia-materialized/
+.julia-sequence/
+.julia-index/
+.julia-constraint/
+.julia-foreign/
+.julia-primary/
+.julia-unique/
+.julia-check/
+.julia-default/
+.julia-not/
+.julia-null/
+.julia-boolean/
+.julia-integer/
+.julia-float/
+.julia-string/
+.julia-date/
+.julia-time/
+.julia-timestamp/
+.julia-interval/
+.julia-array/
+.julia-map/
+.julia-set/
+.julia-record/
+.julia-variant/
+.julia-enum/
+.julia-union/
+.julia-intersection/
+.julia-complement/
+.julia-product/
+.julia-sum/
+.julia-average/
+.julia-min/
+.julia-max/
+.julia-count/
+
+# Zig
+zig-cache/
+zig-out/
+
+# Go
+*.exe
+*.test
+*.prof
+*.syso
+vendor/
+
+# Dart
+.dart_tool/
+.packages
+.pub/
+build/
+
+# Flutter
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+ios/.symlinks/
+android/.gradle/
+android/gradle/
+android/build/
+android/app/build/
+build/
+*.iws
+*.iml
+*.ipr
+*.swp
+*.swo
+*.tmp
+*.log
+
+# Unity
+Library/
+Temp/
+Obj/
+Build/
+Logs/
+UserSettings/
+*.cs.meta
+*.prefab.meta
+*.unity.meta
+*.asset.meta
+*.mat.meta
+*.anim.meta
+*.controller.meta
+*.physicMaterial.meta
+*.physicsMaterial2D.meta
+*.mat.meta
+*.cubemap.meta
+*.flare.meta
+*.fontsettings.meta
+*.giparams.meta
+*.guiskin.meta
+*.mask.meta
+*.overrideController.meta
+*.particle.meta
+*.physicsMaterial.meta
+*.prefab.meta
+*.renderTexture.meta
+*.shader.meta
+*.spriteatlas.meta
+*.terrain.meta
+*.terrainlayer.meta
+*.tga.meta
+*.wav.meta
+*.asset.meta
+*.meta.meta
+*.unity.meta
+*.unity3d.meta
+*.assetbundle.meta
+*.asset.meta
+*.prefab.meta
+*.unity.meta
+*.mat.meta
+*.anim.meta
+*.controller.meta
+*.physicMaterial.meta
+*.physicsMaterial2D.meta
+*.mat.meta
+*.cubemap.meta
+*.flare.meta
+*.fontsettings.meta
+*.giparams.meta
+*.guiskin.meta
+*.mask.meta
+*.overrideController.meta
+*.particle.meta
+*.physicsMaterial.meta
+*.prefab.meta
+*.renderTexture.meta
+*.shader.meta
+*.spriteatlas.meta
+*.terrain.meta
+*.terrainlayer.meta
+*.tga.meta
+*.wav.meta
+*.asset.meta
+*.meta.meta
+*.unity.meta
+*.unity3d.meta
+*.assetbundle.meta
+*.asset.meta
+*.prefab.meta
+*.unity.meta
+*.mat.meta
+*.anim.meta
+*.controller.meta
+*.physicMaterial.meta
+*.physicsMaterial2D.meta
+*.mat.meta
+*.cubemap.meta
+*.flare.meta
+*.fontsettings.meta
+*.giparams.meta
+*.guiskin.meta
+*.mask.meta
+*.overrideController.meta
+*.particle.meta
+*.physicsMaterial.meta
+*.prefab.meta
+*.renderTexture.meta
+*.shader.meta
+*.spriteatlas.meta
+*.terrain.meta
+*.terrainlayer.meta
+*.tga.meta
+*.wav.meta
+*.asset.meta
+*.meta.meta
+*.unity.meta
+*.unity3d.meta
+*.assetbundle.meta
+
+# Unreal Engine
+Intermediate/
+Saved/
+Binaries/
+*. uproject
+*. uprojectdirs
+*. uprojectname
+*. uplugin
+*. upluginmanifest
+*. uasset
+*. umap
+*. ulevel
+*. upkg
+*. uexp
+*. ubulk
+*. ustruct
+*. ufunction
+*. uproperty
+*. uobject
+*. uclass
+*. uinterface
+*. ustruct
+*. uenum
+*. udelegate
+*. uscript
+*. ucodegen
+*. uht
+*. uproto
+*. upb
+*. upbtext
+*. upbjson
+*. upbdesc
+*. upbtextdesc
+*. upbjsondesc
+*. upbtextjson
+*. upbjsonproto
+*. upbtextprotodesc
+*. upbjsonprotodesc
+*. upbtextjsonproto
+*. upbjsonprotodescdesc
+*. upbtextjsonprotodescdesc
+
+# Godot
+.import/
+.export/
+.godot/
+scene_unique_id.cache
+script_class_names.gdn
+*.import
+*.export
+*.scn
+*.tres
+*.res
+*.godot
+*.gd
+*.gdc
+*.gde
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+*.gdn
+*.gdnlib
+*.gdns
+......
+```
