@@ -276,6 +276,7 @@ async function handleGetUserProfile(username) {
       username,
       alias: '',
       tags: '',
+      notes: '',
       gender: '',
       age: '',
       kinks: ''
