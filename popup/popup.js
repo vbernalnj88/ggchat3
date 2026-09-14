@@ -222,7 +222,7 @@ async function loadUsers() {
         
         li.innerHTML = `
           <div class="user-name">
-            ${escapeHtml(displayName)}
+            ${displayNameHtml}
             ${atUsername ? `<span class="profile-field" title="@username">@${escapeHtml(atUsername.substring(1))}</span>` : ''}
             ${tagFlairsHtml}
             <span class="profile-field" title="Click to edit profile" data-edit-profile="${escapeHtml(user.userId)}">✏️</span>
@@ -300,7 +300,12 @@ async function showUserSessions(userId) {
     const existingMsgSections = document.querySelectorAll('#user-sessions > div[style*="margin-top"]');
     existingMsgSections.forEach(el => el.remove());
 
-    response.sessions.forEach(session => {
+    // Sort sessions by lastSynced date (most recent first)
+    const sortedSessions = [...response.sessions].sort((a, b) => {
+      return new Date(b.lastSynced) - new Date(a.lastSynced);
+    });
+
+    sortedSessions.forEach(session => {
       const li = document.createElement('li');
       li.className = 'session-item';
       li.innerHTML = `
@@ -460,7 +465,12 @@ async function loadAllSessionsList() {
     });
 
     if (sessionMap.size > 0) {
-      sessionMap.forEach((session, sessionId) => {
+      // Convert to array and sort by lastSynced date (most recent first)
+      const sessionsArray = Array.from(sessionMap.values()).sort((a, b) => {
+        return new Date(b.lastSynced) - new Date(a.lastSynced);
+      });
+      
+      sessionsArray.forEach((session, sessionId) => {
         const li = document.createElement('li');
         li.className = 'session-item';
         li.innerHTML = `
