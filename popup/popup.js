@@ -66,9 +66,14 @@ async function loadUsers() {
         const displayName = user.username || user.userId;
         const atUsername = hasAtUsername ? user.userId : null;
         
+        // If there's an @username, use title attribute for hover display
+        const displayNameHtml = atUsername 
+          ? `<span title="${escapeHtml(atUsername)}">${escapeHtml(displayName)}</span>`
+          : escapeHtml(displayName);
+        
         li.innerHTML = `
           <div class="user-name">
-            ${escapeHtml(displayName)}
+            ${displayNameHtml}
             ${atUsername ? `<span class="profile-field" title="@username">@${escapeHtml(atUsername.substring(1))}</span>` : ''}
             <span class="profile-field" title="Click to edit profile" data-edit-profile="${escapeHtml(user.userId)}">✏️</span>
           </div>
@@ -145,7 +150,12 @@ async function showUserSessions(userId) {
     const existingMsgSections = document.querySelectorAll('#user-sessions > div[style*="margin-top"]');
     existingMsgSections.forEach(el => el.remove());
 
-    response.sessions.forEach(session => {
+    // Sort sessions by lastSynced date (most recent first)
+    const sortedSessions = [...response.sessions].sort((a, b) => {
+      return new Date(b.lastSynced) - new Date(a.lastSynced);
+    });
+
+    sortedSessions.forEach(session => {
       const li = document.createElement('li');
       li.className = 'session-item';
       li.innerHTML = `
@@ -305,7 +315,12 @@ async function loadAllSessionsList() {
     });
 
     if (sessionMap.size > 0) {
-      sessionMap.forEach((session, sessionId) => {
+      // Convert to array and sort by lastSynced date (most recent first)
+      const sessionsArray = Array.from(sessionMap.values()).sort((a, b) => {
+        return new Date(b.lastSynced) - new Date(a.lastSynced);
+      });
+      
+      sessionsArray.forEach((session, sessionId) => {
         const li = document.createElement('li');
         li.className = 'session-item';
         li.innerHTML = `
@@ -687,3 +702,125 @@ window.showSessionMessages = showSessionMessages;
 window.backToUsers = backToUsers;
 window.backToSessions = backToSessions;
 window.importChatData = importChatData;
+window.exportAllData = exportAllData;
+window.exportMessagesBySession = exportMessagesBySession;
+
+// Export all data as JSON
+async function exportAllData() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: 'getUsers' });
+    
+    if (!response.success) {
+      alert('Error loading data for export: ' + response.error);
+      return;
+    }
+    
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      users: response.users
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-archive-all-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    alert('Error exporting data: ' + error.message);
+  }
+}
+
+// Export messages by session in plain text format
+async function exportMessagesBySession() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: 'getUsers' });
+    
+    if (!response.success) {
+      alert('Error loading data for export: ' + response.error);
+      return;
+    }
+    
+    // Collect all unique sessions
+    const sessionMap = new Map();
+    
+    response.users.forEach(user => {
+      user.sessions.forEach(session => {
+        if (!sessionMap.has(session.sessionId)) {
+          sessionMap.set(session.sessionId, {
+            sessionId: session.sessionId,
+            lastSynced: session.lastSynced,
+            participants: []
+          });
+        }
+        if (!sessionMap.get(session.sessionId).participants.includes(user.userId)) {
+          sessionMap.get(session.sessionId).participants.push(user.userId);
+        }
+      });
+    });
+    
+    if (sessionMap.size === 0) {
+      alert('No sessions found to export');
+      return;
+    }
+    
+    let exportText = '';
+    
+    // Process each session
+    for (const [sessionId, sessionInfo] of sessionMap) {
+      try {
+        const msgResponse = await chrome.runtime.sendMessage({ 
+          action: 'getSessionMessages', 
+          sessionId: sessionId 
+        });
+        
+        if (msgResponse.success && msgResponse.messages.length > 0) {
+          exportText += '='.repeat(60) + '\n';
+          exportText += `SESSION ID: ${sessionId}\n`;
+          exportText += `LAST SYNCED: ${new Date(sessionInfo.lastSynced).toLocaleString()}\n`;
+          exportText += `PARTICIPANTS: ${sessionInfo.participants.join(', ')}\n`;
+          exportText += `MESSAGE COUNT: ${msgResponse.messages.length}\n`;
+          exportText += '='.repeat(60) + '\n\n';
+          
+          // Sort messages by timestamp
+          const sortedMessages = [...msgResponse.messages].sort((a, b) => 
+            new Date(a.timestamp) - new Date(b.timestamp)
+          );
+          
+          sortedMessages.forEach(msg => {
+            const author = msg.author || 'Unknown';
+            const authorId = msg.authorId || '';
+            const atUsername = authorId && authorId !== author ? ` [${authorId}]` : '';
+            const timestamp = new Date(msg.timestamp).toLocaleString();
+            const content = (msg.content || msg.body || '').replace(/\n/g, '\\n');
+            
+            exportText += `[${timestamp}] ${author}${atUsername}: ${content}\n`;
+          });
+          
+          exportText += '\n\n';
+        }
+      } catch (err) {
+        console.error(`Error loading messages for session ${sessionId}:`, err);
+        exportText += `ERROR: Could not load messages for session ${sessionId}\n\n`;
+      }
+    }
+    
+    // Download the file
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-messages-by-session-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting messages:', error);
+    alert('Error exporting messages: ' + error.message);
+  }
+}
