@@ -5,6 +5,9 @@
   // Username lookup map: displayName -> @username
   const usernameLookup = new Map();
   
+  // Track messages with missing @username for verification
+  const messagesMissingUsername = new Set();
+  
   // Polling interval for checking profile modal (in ms)
   const PROFILE_MODAL_POLL_INTERVAL = 1000;
   
@@ -170,7 +173,18 @@
         }
       }
       
+      // Track messages missing @username for verification
+      if (!atUsername && username) {
+        const authorKey = `${username}`;
+        if (!messagesMissingUsername.has(authorKey)) {
+          messagesMissingUsername.add(authorKey);
+          console.warn('[Chat Archiver] Missing @username for display name:', username, '- Chat ingestion requires verification');
+        }
+      }
+      
       // Use @username as the unique identifier if available, otherwise fall back to display username
+      // BUT: if @username is missing, mark it as needing verification
+      const needsVerification = !atUsername && username;
       const uniqueAuthorId = atUsername || username;
       
       // Auto-inject @username badge if we found one via lookup and it's not already in the DOM
@@ -262,6 +276,7 @@
         author: username,
         authorId: uniqueAuthorId,  // Stable identifier that doesn't change with display name
         atUsername: atUsername || null,  // The @username if found
+        needsVerification: needsVerification,  // Flag if @username is missing and requires verification
         avatar: avatarUrl,
         content: content,
         timestamp: timestamp,
@@ -491,6 +506,33 @@
         console.warn('[Chat Archiver] No messages parsed! Check selectors.');
       }
       
+      // Check for messages with missing @username that need verification
+      const messagesNeedingVerification = messages.filter(m => m.needsVerification);
+      if (messagesNeedingVerification.length > 0) {
+        const uniqueAuthors = new Set(messagesNeedingVerification.map(m => m.author));
+        const authorList = Array.from(uniqueAuthors).join(', ');
+        
+        // Show warning and ask for confirmation before proceeding
+        const confirmed = confirm(
+          `WARNING: Missing @username for ${uniqueAuthors.size} user(s): ${authorList}\n\n` +
+          `Chat history may be incomplete or inaccurate without verified usernames.\n\n` +
+          `Do you want to proceed with ingestion anyway?`
+        );
+        
+        if (!confirmed) {
+          isSyncing = false;
+          syncButton.disabled = false;
+          syncButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 8a6 6 0 1 1-1.7-4.2M14 2v4h-4"/>
+            </svg>
+            Sync Chat
+          `;
+          showNotification('Sync cancelled. Please view user profiles to capture @usernames.', 'info');
+          return;
+        }
+      }
+      
       // Send to background script for storage and server sync
       const response = await chrome.runtime.sendMessage({
         action: 'syncChat',
@@ -585,31 +627,34 @@
     console.log('[Chat Archiver] Starting profile modal polling...');
     
     profileModalPoller = setInterval(() => {
-      // Look for the profile modal div with data-multiplayer-profile-modal attribute
-      const profileModal = document.querySelector('div[data-multiplayer-profile-modal]');
+      // Look for #mp-profile-heading anywhere on the page (more reliable than looking for modal)
+      const profileHeading = document.querySelector('h3#mp-profile-heading');
       
-      if (profileModal) {
-        // Extract display name from the heading
-        const displayNameEl = profileModal.querySelector('h3#mp-profile-heading span.truncate');
+      if (profileHeading) {
+        // Extract display name from the heading span
+        const displayNameEl = profileHeading.querySelector('span.min-w-0.whitespace-nowrap') || 
+                              profileHeading.querySelector('span.truncate');
         const displayName = displayNameEl ? displayNameEl.textContent.trim() : '';
         
-        // Extract @username from the paragraph below the heading
-        const usernameEl = profileModal.querySelector('p.text-xs.text-gray-500');
+        // Extract @username from the href of the link following mp-profile-heading (most reliable)
         let atUsername = '';
-        if (usernameEl) {
-          const usernameText = usernameEl.textContent.trim();
-          // Remove the @ symbol if present
-          atUsername = usernameText.replace(/^@/, '');
+        const profileLink = profileHeading.querySelector('a[href*="/profile/"]');
+        if (profileLink) {
+          const hrefMatch = profileLink.href.match(/\/profile\/([@\w-]+)/i);
+          if (hrefMatch) {
+            atUsername = hrefMatch[1].replace(/^@/, '');
+          }
         }
         
-        // Also check for @username in the profile link href
+        // Fallback: try to extract @username from the paragraph below the heading
         if (!atUsername) {
-          const profileLink = profileModal.querySelector('a[href*="/profile/"]');
-          if (profileLink) {
-            const hrefMatch = profileLink.href.match(/\/profile\/([@\w-]+)/i);
-            if (hrefMatch) {
-              atUsername = hrefMatch[1].replace(/^@/, '');
-            }
+          // Look for the paragraph sibling that contains @username
+          const usernameEl = profileHeading.parentElement?.querySelector('p.text-xs.text-gray-500') ||
+                             profileHeading.closest('[class*="flex-col"]')?.querySelector('p.text-xs.text-gray-500');
+          if (usernameEl) {
+            const usernameText = usernameEl.textContent.trim();
+            // Remove the @ symbol if present
+            atUsername = usernameText.replace(/^@/, '');
           }
         }
         

@@ -2,10 +2,40 @@
 let currentView = 'users';
 let currentUser = null;
 let currentSessionId = null;
+let allUsersData = []; // Store all users for search filtering
+
+// Color mapping for tags (consistent color per unique tag)
+const tagColorMap = new Map();
+let nextTagColorIndex = 1;
+
+// Get consistent color index for a tag
+function getTagColorIndex(tag) {
+  const normalizedTag = tag.trim().toLowerCase();
+  if (!tagColorMap.has(normalizedTag)) {
+    tagColorMap.set(normalizedTag, ((nextTagColorIndex - 1) % 15) + 1);
+    nextTagColorIndex++;
+  }
+  return tagColorMap.get(normalizedTag);
+}
+
+// Generate HTML for tag flairs
+function generateTagFlairsHtml(tagsString) {
+  if (!tagsString || !tagsString.trim()) return '';
+  
+  const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
+  if (tags.length === 0) return '';
+  
+  return tags.map(tag => {
+    const colorIndex = getTagColorIndex(tag);
+    return `<span class="tag-flair tag-flair-${colorIndex}" title="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`;
+  }).join('');
+}
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
+  setupImportButton();
+  setupSearchBars();
   loadUsers();
 });
 
@@ -17,6 +47,100 @@ function setupNavigation() {
       const viewName = tab.getAttribute('data-view');
       switchView(viewName);
     });
+  });
+  
+  // Setup back buttons
+  const backToAllSessionsBtn = document.getElementById('back-to-all-sessions-btn');
+  if (backToAllSessionsBtn) {
+    backToAllSessionsBtn.addEventListener('click', showAllSessionsView);
+  }
+  
+  const backToSessionsBtn = document.getElementById('back-to-sessions-btn');
+  if (backToSessionsBtn) {
+    backToSessionsBtn.addEventListener('click', backToSessions);
+  }
+  
+  const backToUsersBtn = document.getElementById('back-to-users-btn');
+  if (backToUsersBtn) {
+    backToUsersBtn.addEventListener('click', backToUsers);
+  }
+}
+
+// Setup import/export buttons
+function setupImportButton() {
+  const importBtn = document.getElementById('import-btn');
+  if (importBtn) {
+    importBtn.addEventListener('click', importChatData);
+  }
+  
+  const exportBtn = document.getElementById('export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportAllData);
+  }
+  
+  const importFileBtn = document.getElementById('import-file-btn');
+  if (importFileBtn) {
+    importFileBtn.addEventListener('click', importFromFile);
+  }
+}
+
+// Setup search bars for users and sessions tabs
+function setupSearchBars() {
+  const userSearch = document.getElementById('user-search');
+  if (userSearch) {
+    userSearch.addEventListener('input', (e) => {
+      filterUsers(e.target.value);
+    });
+  }
+  
+  const sessionSearch = document.getElementById('session-search');
+  if (sessionSearch) {
+    sessionSearch.addEventListener('input', (e) => {
+      filterSessions(e.target.value);
+    });
+  }
+}
+
+// Filter users based on search query
+function filterUsers(query) {
+  const searchTerm = query.toLowerCase().trim();
+  const userList = document.getElementById('user-list');
+  const items = userList.querySelectorAll('.user-item');
+  
+  items.forEach(item => {
+    const userName = item.querySelector('.user-name').textContent.toLowerCase();
+    const tags = item.getAttribute('data-tags') || '';
+    const notes = item.getAttribute('data-notes') || '';
+    
+    const matchesSearch = !searchTerm || 
+                          userName.includes(searchTerm) || 
+                          tags.toLowerCase().includes(searchTerm) ||
+                          notes.toLowerCase().includes(searchTerm);
+    
+    item.style.display = matchesSearch ? '' : 'none';
+  });
+}
+
+// Filter sessions based on search query
+function filterSessions(query) {
+  const searchTerm = query.toLowerCase().trim();
+  let sessionList;
+  
+  // Determine which session list to filter based on current view
+  if (currentUser) {
+    sessionList = document.getElementById('user-session-list');
+  } else {
+    sessionList = document.getElementById('session-list');
+  }
+  
+  if (!sessionList) return;
+  
+  const items = sessionList.querySelectorAll('.session-item');
+  
+  items.forEach(item => {
+    const sessionText = item.textContent.toLowerCase();
+    const matchesSearch = !searchTerm || sessionText.includes(searchTerm);
+    item.style.display = matchesSearch ? '' : 'none';
   });
 }
 
@@ -34,6 +158,12 @@ function switchView(viewName) {
   document.getElementById(`${viewName}-view`).classList.add('active');
 
   currentView = viewName;
+  
+  // Show/hide session search bar based on view
+  const sessionSearch = document.getElementById('session-search');
+  if (sessionSearch) {
+    sessionSearch.style.display = (viewName === 'sessions' && !currentUser) ? 'block' : 'none';
+  }
 
   // Load data based on view
   if (viewName === 'users') {
@@ -56,8 +186,11 @@ async function loadUsers() {
     if (response.success && response.users.length > 0) {
       const userList = document.getElementById('user-list');
       userList.innerHTML = '';
+      
+      // Store users for search filtering
+      allUsersData = response.users;
 
-      response.users.forEach(user => {
+      response.users.forEach(async user => {
         const li = document.createElement('li');
         li.className = 'user-item';
         
@@ -66,15 +199,32 @@ async function loadUsers() {
         const displayName = user.username || user.userId;
         const atUsername = hasAtUsername ? user.userId : null;
         
-        // If there's an @username, use title attribute for hover display
-        const displayNameHtml = atUsername 
-          ? `<span title="${escapeHtml(atUsername)}">${escapeHtml(displayName)}</span>`
-          : escapeHtml(displayName);
+        // Get user profile for tags and notes
+        let profile = {};
+        try {
+          const profileResponse = await chrome.runtime.sendMessage({
+            action: 'getUserProfile',
+            username: user.userId
+          });
+          if (profileResponse.success) {
+            profile = profileResponse.profile;
+          }
+        } catch (e) {
+          console.error('Error loading profile for user:', user.userId, e);
+        }
+        
+        // Generate tag flairs HTML
+        const tagFlairsHtml = generateTagFlairsHtml(profile.tags || '');
+        
+        // Store tags and notes as data attributes for search
+        li.setAttribute('data-tags', profile.tags || '');
+        li.setAttribute('data-notes', profile.notes || '');
         
         li.innerHTML = `
           <div class="user-name">
             ${displayNameHtml}
             ${atUsername ? `<span class="profile-field" title="@username">@${escapeHtml(atUsername.substring(1))}</span>` : ''}
+            ${tagFlairsHtml}
             <span class="profile-field" title="Click to edit profile" data-edit-profile="${escapeHtml(user.userId)}">✏️</span>
           </div>
           <div class="user-meta">${user.sessions.length} session(s)</div>
@@ -498,7 +648,8 @@ async function openUserProfile(username) {
       document.getElementById('profile-tags').value = profile.tags || '';
       document.getElementById('profile-gender').value = profile.gender || '';
       document.getElementById('profile-age').value = profile.age || '';
-      document.getElementById('profile-kinks').value = profile.kinks || '';
+      document.getElementById('profile-notes').value = profile.notes || '';
+        document.getElementById('profile-kinks').value = profile.kinks || '';
       
       switchView('profile');
     }
@@ -533,7 +684,8 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
     tags: document.getElementById('profile-tags').value,
     gender: document.getElementById('profile-gender').value,
     age: document.getElementById('profile-age').value,
-    kinks: document.getElementById('profile-kinks').value
+    kinks: document.getElementById('profile-kinks').value,
+      notes: document.getElementById('profile-notes').value
   };
   
   try {
@@ -555,10 +707,43 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
   }
 });
 
+// Delete user button handler
+document.getElementById('delete-user-btn').addEventListener('click', async () => {
+  const username = document.getElementById('profile-username').textContent;
+  
+  // Confirm dialog before deleting
+  const confirmed = confirm(`Are you sure you want to delete user "${username}"?\n\nThis will permanently delete:\n- All sessions belonging to this user\n- All messages in those sessions\n- The user's profile (tags, notes, etc.)\n\nThis action cannot be undone.`);
+  
+  if (!confirmed) {
+    return;
+  }
+  
+  try {
+    const response = await chrome.runtime.sendMessage({ 
+      action: 'deleteUser', 
+      username: username
+    });
+    
+    if (response.success) {
+      alert(response.message);
+      backToUsers();
+    } else {
+      alert('Error deleting user: ' + response.error);
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    alert('Error deleting user: ' + error.message);
+  }
+});
+
 // Import chat data
 async function importChatData() {
+  console.log('[Import] importChatData called');
   const text = document.getElementById('import-text').value.trim();
   let sessionId = document.getElementById('import-session-id').value.trim();
+  
+  console.log('[Import] Text length:', text.length);
+  console.log('[Import] Session ID:', sessionId);
   
   if (!text) {
     alert('Please paste some chat text to import');
@@ -568,10 +753,17 @@ async function importChatData() {
   // Generate session ID if not provided
   if (!sessionId) {
     sessionId = generateUUID();
+    console.log('[Import] Generated session ID:', sessionId);
   }
   
   try {
     const messages = parseImportedText(text, sessionId);
+    console.log('[Import] Parsed messages:', messages.length);
+    
+    if (messages.length === 0) {
+      alert('No messages could be parsed from the input. Please check the format.');
+      return;
+    }
     
     const response = await chrome.runtime.sendMessage({ 
       action: 'importChatData',
@@ -580,6 +772,8 @@ async function importChatData() {
         messages: messages
       }
     });
+    
+    console.log('[Import] Response:', response);
     
     if (response.success) {
       alert(`Successfully imported ${response.messageCount} messages from ${response.userCount} user(s)!`);
@@ -590,63 +784,98 @@ async function importChatData() {
       alert('Error importing: ' + response.error);
     }
   } catch (error) {
-    console.error('Error importing chat:', error);
-    alert('Error importing chat data');
+    console.error('[Import] Error importing chat:', error);
+    alert('Error importing chat data: ' + error.message);
   }
 }
 
-// Parse imported text format: "username:time message" or "username:time\nmessage"
+// Parse imported text format: "username:time message" or "username:time\nmessage" or "usernameTime\nmessage"
 function parseImportedText(text, sessionId) {
+  console.log('[Parse] Starting to parse text');
   const messages = [];
   const lines = text.split('\n');
   let currentMessage = null;
   let messageIdCounter = 0;
+
+  // Pattern 1: username: time (with colon and space)
+  // Pattern 2: usernameTime (no space/colon, e.g., "vbernalnj5:07 PM")
+  // Username should be alphanumeric (plus _, @, -) with no spaces
+  // Time pattern: digits:digits optionally followed by AM/PM
   
-  // Regex to match username:time pattern
-  const messagePattern = /^([^:]+):\s*(.+?)$/;
-  
+  const messagePattern = /^([A-Za-z0-9_@-]+)\s*:\s*(\d{1,2}:\d{2})\s*(AM|PM|am|pm)?\s*(.*)$/i;
+  const noColonPattern = /^([A-Za-z0-9_@-]+)(\d{1,2}:\d{2})\s*(AM|PM|am|pm)?\s*(.*)$/i;
+
   for (const line of lines) {
     const trimmedLine = line.trim();
     if (!trimmedLine) continue;
+
+    // Try to match the pattern with colon
+    let match = trimmedLine.match(messagePattern);
     
-    const match = trimmedLine.match(messagePattern);
-    
+    // If no match, try the no-colon pattern (username directly followed by time)
+    if (!match) {
+      match = trimmedLine.match(noColonPattern);
+    }
+
+    // If we have a match, it's ALWAYS a new message header
     if (match) {
       // Save previous message if exists
       if (currentMessage) {
         messages.push(currentMessage);
       }
-      
+
       // Start new message
       const username = match[1].trim();
-      const timeOrContent = match[2].trim();
-      
-      // Check if this is just a time (e.g., "08 PM") or actual content
-      const isTimeOnly = /^\d{1,2}\s*(AM|PM|am|pm)/i.test(timeOrContent);
-      
+      // Group 4 is the content after the timestamp
+      const restOfLine = (match[4] || '').trim();
+
       currentMessage = {
         id: `${sessionId}-${messageIdCounter++}`,
         type: 'message',
         author: username,
-        content: isTimeOnly ? '' : timeOrContent,
+        content: restOfLine,
         timestamp: new Date().toISOString(),
         rawHtml: ''
       };
-    } else if (currentMessage) {
-      // This is a continuation of the previous message
-      if (currentMessage.content) {
-        currentMessage.content += '\n' + trimmedLine;
+    } else {
+      // No match - this must be a continuation or standalone message
+      // Check if line looks like a message continuation
+      const looksLikeContinuation = /^[a-z]/.test(trimmedLine) || 
+                                     /^[^A-Za-z0-9]/.test(trimmedLine) ||
+                                     trimmedLine.includes(':)') ||
+                                     trimmedLine.includes(':(') ||
+                                     trimmedLine.includes('<3');
+      
+      if (currentMessage && looksLikeContinuation) {
+        // This is a continuation of the previous message
+        if (currentMessage.content) {
+          currentMessage.content += '\n' + trimmedLine;
+        } else {
+          currentMessage.content = trimmedLine;
+        }
       } else {
-        currentMessage.content = trimmedLine;
+        // Standalone message with unknown author
+        if (currentMessage) {
+          messages.push(currentMessage);
+        }
+        currentMessage = {
+          id: `${sessionId}-${messageIdCounter++}`,
+          type: 'message',
+          author: 'Unknown',
+          content: trimmedLine,
+          timestamp: new Date().toISOString(),
+          rawHtml: ''
+        };
       }
     }
   }
-  
+
   // Don't forget the last message
   if (currentMessage) {
     messages.push(currentMessage);
   }
-  
+
+  console.log('[Parse] Parsed', messages.length, 'messages');
   return messages;
 }
 
@@ -695,132 +924,101 @@ function showEmptyState(elementId, message) {
   }
 }
 
-// Make functions globally available
-window.showUserSessions = showUserSessions;
-window.showAllSessionsView = showAllSessionsView;
-window.showSessionMessages = showSessionMessages;
-window.backToUsers = backToUsers;
-window.backToSessions = backToSessions;
-window.importChatData = importChatData;
-window.exportAllData = exportAllData;
-window.exportMessagesBySession = exportMessagesBySession;
+// Make functions globally available (not needed anymore since we use addEventListener)
+// window.showUserSessions = showUserSessions;
+// window.showAllSessionsView = showAllSessionsView;
+// window.showSessionMessages = showSessionMessages;
+// window.backToUsers = backToUsers;
+// window.backToSessions = backToSessions;
+// window.importChatData = importChatData;
 
-// Export all data as JSON
+// Export all data for backup/transfer between computers
 async function exportAllData() {
   try {
-    const response = await chrome.runtime.sendMessage({ action: 'getUsers' });
+    const response = await chrome.runtime.sendMessage({ action: 'exportAllData' });
     
     if (!response.success) {
-      alert('Error loading data for export: ' + response.error);
+      alert('Error exporting data: ' + response.error);
       return;
     }
     
-    const exportData = {
-      exportedAt: new Date().toISOString(),
-      users: response.users
-    };
+    const exportData = response.data;
+    const jsonString = JSON.stringify(exportData, null, 2);
     
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    // Create download link
+    const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `chat-archive-all-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `chat-archiver-export-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    console.log('[Export] Successfully exported data:', {
+      sessionsCount: exportData.sessions.length,
+      profilesCount: Object.keys(exportData.userProfiles).length
+    });
   } catch (error) {
-    console.error('Error exporting data:', error);
+    console.error('[Export] Error exporting data:', error);
     alert('Error exporting data: ' + error.message);
   }
 }
 
-// Export messages by session in plain text format
-async function exportMessagesBySession() {
+// Import data from exported JSON file
+async function importFromFile() {
+  const fileInput = document.getElementById('import-file-input');
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    alert('Please select a JSON file to import');
+    return;
+  }
+  
   try {
-    const response = await chrome.runtime.sendMessage({ action: 'getUsers' });
+    const fileContent = await readFileAsText(file);
+    const exportData = JSON.parse(fileContent);
     
-    if (!response.success) {
-      alert('Error loading data for export: ' + response.error);
-      return;
+    // Validate the export data format
+    if (!exportData || !exportData.sessions || !Array.isArray(exportData.sessions)) {
+      throw new Error('Invalid export file format. Expected a Chat Archiver export file.');
     }
     
-    // Collect all unique sessions
-    const sessionMap = new Map();
-    
-    response.users.forEach(user => {
-      user.sessions.forEach(session => {
-        if (!sessionMap.has(session.sessionId)) {
-          sessionMap.set(session.sessionId, {
-            sessionId: session.sessionId,
-            lastSynced: session.lastSynced,
-            participants: []
-          });
-        }
-        if (!sessionMap.get(session.sessionId).participants.includes(user.userId)) {
-          sessionMap.get(session.sessionId).participants.push(user.userId);
-        }
-      });
+    const response = await chrome.runtime.sendMessage({ 
+      action: 'importExportedData',
+      data: exportData 
     });
     
-    if (sessionMap.size === 0) {
-      alert('No sessions found to export');
+    if (!response.success) {
+      alert('Error importing data: ' + response.error);
       return;
     }
     
-    let exportText = '';
+    alert(response.message || 'Successfully imported data!');
     
-    // Process each session
-    for (const [sessionId, sessionInfo] of sessionMap) {
-      try {
-        const msgResponse = await chrome.runtime.sendMessage({ 
-          action: 'getSessionMessages', 
-          sessionId: sessionId 
-        });
-        
-        if (msgResponse.success && msgResponse.messages.length > 0) {
-          exportText += '='.repeat(60) + '\n';
-          exportText += `SESSION ID: ${sessionId}\n`;
-          exportText += `LAST SYNCED: ${new Date(sessionInfo.lastSynced).toLocaleString()}\n`;
-          exportText += `PARTICIPANTS: ${sessionInfo.participants.join(', ')}\n`;
-          exportText += `MESSAGE COUNT: ${msgResponse.messages.length}\n`;
-          exportText += '='.repeat(60) + '\n\n';
-          
-          // Sort messages by timestamp
-          const sortedMessages = [...msgResponse.messages].sort((a, b) => 
-            new Date(a.timestamp) - new Date(b.timestamp)
-          );
-          
-          sortedMessages.forEach(msg => {
-            const author = msg.author || 'Unknown';
-            const authorId = msg.authorId || '';
-            const atUsername = authorId && authorId !== author ? ` [${authorId}]` : '';
-            const timestamp = new Date(msg.timestamp).toLocaleString();
-            const content = (msg.content || msg.body || '').replace(/\n/g, '\\n');
-            
-            exportText += `[${timestamp}] ${author}${atUsername}: ${content}\n`;
-          });
-          
-          exportText += '\n\n';
-        }
-      } catch (err) {
-        console.error(`Error loading messages for session ${sessionId}:`, err);
-        exportText += `ERROR: Could not load messages for session ${sessionId}\n\n`;
-      }
-    }
+    // Clear the file input
+    fileInput.value = '';
     
-    // Download the file
-    const blob = new Blob([exportText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chat-messages-by-session-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Reload users list
+    loadUsers();
+    
+    console.log('[Import File] Successfully imported:', {
+      sessionsCount: response.sessionsCount,
+      profilesCount: response.profilesCount
+    });
   } catch (error) {
-    console.error('Error exporting messages:', error);
-    alert('Error exporting messages: ' + error.message);
+    console.error('[Import File] Error importing data:', error);
+    alert('Error importing file: ' + error.message);
   }
+}
+
+// Helper function to read file as text
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => resolve(event.target.result);
+    reader.onerror = (error) => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
 }
