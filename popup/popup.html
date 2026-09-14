@@ -294,6 +294,54 @@
       margin-left: 6px;
     }
 
+    /* Tag flairs - color coded */
+    .tag-flair {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 4px;
+      margin-right: 2px;
+    }
+
+    .tag-flair-1 { background: #ef4444; color: #fff; }
+    .tag-flair-2 { background: #f97316; color: #fff; }
+    .tag-flair-3 { background: #f59e0b; color: #000; }
+    .tag-flair-4 { background: #84cc16; color: #000; }
+    .tag-flair-5 { background: #22c55e; color: #fff; }
+    .tag-flair-6 { background: #10b981; color: #fff; }
+    .tag-flair-7 { background: #06b6d4; color: #fff; }
+    .tag-flair-8 { background: #3b82f6; color: #fff; }
+    .tag-flair-9 { background: #6366f1; color: #fff; }
+    .tag-flair-10 { background: #8b5cf6; color: #fff; }
+    .tag-flair-11 { background: #d946ef; color: #fff; }
+    .tag-flair-12 { background: #ec4899; color: #fff; }
+    .tag-flair-13 { background: #f43f5e; color: #fff; }
+    .tag-flair-14 { background: #14b8a6; color: #fff; }
+    .tag-flair-15 { background: #84cc16; color: #000; }
+
+    .search-bar {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .search-bar:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .search-bar::placeholder {
+      color: #666;
+    }
+
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -341,6 +389,7 @@
   <div class="content">
     <!-- Users View -->
     <div id="users-view" class="view active">
+      <input type="text" id="user-search" class="search-bar" placeholder="Search users...">
       <ul id="user-list" class="user-list">
         <!-- Populated by JS -->
       </ul>
@@ -348,13 +397,14 @@
 
     <!-- Sessions View -->
     <div id="sessions-view" class="view">
+      <input type="text" id="session-search" class="search-bar" placeholder="Search sessions..." style="display: none;">
       <div id="all-sessions">
         <ul id="session-list" class="session-list">
           <!-- Populated by JS -->
         </ul>
       </div>
       <div id="user-sessions" style="display: none;">
-        <button class="back-btn" onclick="showAllSessionsView()">← Back to All Sessions</button>
+        <button id="back-to-all-sessions-btn" class="back-btn">← Back to All Sessions</button>
         <h3 style="margin-bottom: 12px; font-size: 14px; color: #fff;">Sessions for <span id="current-user" style="color: #667eea;"></span></h3>
         <ul id="user-session-list" class="session-list">
           <!-- Populated by JS -->
@@ -364,7 +414,7 @@
 
     <!-- Messages View -->
     <div id="messages-view" class="view">
-      <button class="back-btn" onclick="backToSessions()">← Back</button>
+      <button id="back-to-sessions-btn" class="back-btn">← Back</button>
       <h3 style="margin-bottom: 12px; font-size: 14px; color: #fff;">Session Messages</h3>
       <div id="message-container" style="max-height: 400px; overflow-y: auto;">
         <!-- Populated by JS -->
@@ -373,7 +423,7 @@
 
     <!-- Profile View -->
     <div id="profile-view" class="view">
-      <button class="back-btn" onclick="backToUsers()">← Back</button>
+      <button id="back-to-users-btn" class="back-btn">← Back</button>
       <h3 style="margin-bottom: 16px; font-size: 14px; color: #fff;">Edit Profile: <span id="profile-username" style="color: #667eea;"></span></h3>
       <form id="profile-form">
         <div class="form-group">
@@ -383,6 +433,10 @@
         <div class="form-group">
           <label>Tags (comma-separated)</label>
           <input type="text" id="profile-tags" placeholder="tag1, tag2, tag3">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="profile-notes" placeholder="Add notes about this user..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; font-size: 13px; resize: vertical;"></textarea>
         </div>
         <div class="form-group">
           <label>Gender</label>
@@ -397,11 +451,29 @@
           <input type="text" id="profile-kinks" placeholder="Enter kinks">
         </div>
         <button type="submit" class="btn btn-primary">Save Profile</button>
+        <button type="button" id="delete-user-btn" class="btn btn-secondary" style="margin-top: 12px; background: rgba(239, 68, 68, 0.2); color: #ef4444;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 4h12M6 4v8m4-8v8M4 4l1 10a2 2 0 002 2h4a2 2 0 002-2l1-10M8 2v2"/>
+          </svg>
+          Delete User
+        </button>
       </form>
     </div>
 
     <!-- Import View -->
     <div id="import-view" class="view">
+      <div style="margin-bottom: 20px; padding: 16px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.3);">
+        <h4 style="font-size: 14px; color: #667eea; margin-bottom: 12px;">Backup & Transfer</h4>
+        <p style="font-size: 12px; color: #a0a0a0; margin-bottom: 12px;">Export all your profiles and sessions to a file, then import it on another computer.</p>
+        <button id="export-btn" class="btn btn-secondary" style="margin-bottom: 8px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 2v8m0 0l3-3m-3 3l-3-3M2 12h4"/>
+          </svg>
+          Export All Data
+        </button>
+      </div>
+      
+      <h4 style="font-size: 14px; color: #fff; margin-bottom: 12px;">Import Chat Text</h4>
       <div class="form-group">
         <label>Paste chat history (format: username:time message)</label>
         <textarea id="import-text" placeholder="femmygb5:08 PM
@@ -413,22 +485,24 @@ cool"></textarea>
         <label>Session ID (optional, will generate if empty)</label>
         <input type="text" id="import-session-id" placeholder="UUID or leave blank">
       </div>
-      <button class="btn btn-primary" onclick="importChatData()">
+      <button id="import-btn" class="btn btn-primary">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M8 2v8m0 0l-3-3m3 3l3-3M2 12h4"/>
         </svg>
         Import Chat
       </button>
       
-      <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
-        <h4 style="font-size: 13px; color: #fff; margin-bottom: 12px;">Export Data</h4>
-        <button class="btn btn-secondary" onclick="exportAllData()" style="margin-bottom: 8px;">
-          Export All Data (JSON)
-        </button>
-        <button class="btn btn-secondary" onclick="exportMessagesBySession()">
-          Export Messages by Session (Text)
-        </button>
+      <h4 style="font-size: 14px; color: #fff; margin-top: 20px; margin-bottom: 12px;">Import Backup File</h4>
+      <div class="form-group">
+        <label>Select exported JSON file</label>
+        <input type="file" id="import-file-input" accept=".json" style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e0e0e0; font-size: 13px; width: 100%;">
       </div>
+      <button id="import-file-btn" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 2v8m0 0l3-3m-3 3l-3-3M2 12h4"/>
+        </svg>
+        Import from File
+      </button>
     </div>
   </div>
 
